@@ -192,18 +192,21 @@ function fetchLoad() {
     if (data.length > 0) console.log("LOAD sampleKeys=" + JSON.stringify(Object.keys(data[0])));
     var ctl = [];
     var atl = [];
+    var tsb = [];
     var last = null;
     var i;
     for (i = 0; i < data.length; i++) {
       var w = data[i];
       if (typeof w.ctl === "number") ctl.push(Math.round(w.ctl));
       if (typeof w.atl === "number") atl.push(Math.round(w.atl));
+      var tv = (typeof w.tsb === "number") ? w.tsb : (ctl[ctl.length - 1] - atl[atl.length - 1]);
+      tsb.push(Math.round(tv));
       last = w;
     }
     var c = last && typeof last.ctl === "number" ? Math.round(last.ctl) : 0;
     var a = last && typeof last.atl === "number" ? Math.round(last.atl) : 0;
     var t = last && typeof last.tsb === "number" ? Math.round(last.tsb) : c - a;
-    var series = "ctl:" + ctl.join(",") + ";atl:" + atl.join(",");
+    var series = "ctl:" + ctl.join(",") + ";atl:" + atl.join(",") + ";tsb:" + tsb.join(",");
     console.log("LOAD ctl=" + c + " atl=" + a + " tsb=" + t + " seriesLen=" + series.length);
     Pebble.sendAppMessage({ TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series }, function (e) {
       console.log("LOAD sendAppMessage result=" + (e && e.error ? "err:" + e.error : "ok"));
