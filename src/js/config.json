@@ -25,6 +25,16 @@
         "messageKey": "ATHLETE_ID",
         "label": "Athlete ID (0 = you)",
         "defaultValue": "0"
+      },
+      {
+        "type": "select",
+        "messageKey": "UNITS",
+        "label": "Units",
+        "options": [
+          { "label": "Metric (km, m)", "value": "metric" },
+          { "label": "Imperial (mi, ft)", "value": "imperial" }
+        ],
+        "defaultValue": "metric"
       }
     ]
   },

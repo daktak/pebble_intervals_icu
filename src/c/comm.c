@@ -26,8 +26,16 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     comm_send_key(MESSAGE_KEY_ATHLETE_ID, t->value->cstring);
   }
 
+  t = dict_find(iter, MESSAGE_KEY_UNITS);
+  if (t) {
+    comm_send_key(MESSAGE_KEY_UNITS, t->value->cstring);
+  }
+
   t = dict_find(iter, MESSAGE_KEY_ERR);
   if (t) {
+    if (main_menu_is_loading()) {
+      main_menu_stats_failed();
+    }
     ui_show_error(t->value->cstring);
     return;
   }
@@ -54,6 +62,13 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     ui_dismiss_overlay();
     return;
   }
+
+  t = dict_find(iter, MESSAGE_KEY_STATS);
+  if (t) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: STATS len=%d", (int)strlen(t->value->cstring));
+    main_menu_set_stats(t->value->cstring);
+    return;
+  }
 }
 
 void comm_send_key(uint32_t key, const char *val) {
@@ -73,6 +88,10 @@ void comm_send_cmd(Cmd cmd) {
 
 bool comm_has_api_key(void) {
   return persist_exists(PKEY_API_KEY);
+}
+
+bool comm_has_athlete_id(void) {
+  return persist_exists(PKEY_ATHLETE_ID);
 }
 
 void comm_init(void) {

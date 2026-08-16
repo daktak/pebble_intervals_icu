@@ -38,7 +38,9 @@
       "TL_ATL",
       "TL_TSB",
       "TL_SERIES",
-      "ERR"
+      "ERR",
+      "STATS",
+      "UNITS"
     ],
     "resources": {
       "media": []
