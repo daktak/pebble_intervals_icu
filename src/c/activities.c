@@ -86,6 +86,32 @@ static int detail_offset(void) {
   return (s_has_zones && s_zone_count > 0) ? BAR_AREA : 0;
 }
 
+static void draw_zone_segment(GContext *ctx, int x, int y, int w, int h, int i) {
+#ifdef PBL_COLOR
+  graphics_context_set_fill_color(ctx, zone_color(i));
+  graphics_fill_rect(ctx, GRect(x, y, w, h), 0, GCornerNone);
+#else
+  int spacing;
+  switch (i) {
+    case 0: spacing = 12; break;
+    case 1: spacing = 8;  break;
+    case 2: spacing = 5;  break;
+    case 3: spacing = 4;  break;
+    case 4: spacing = 3;  break;
+    case 5: spacing = 2;  break;
+    default: spacing = 0;  break;
+  }
+  if (spacing == 0) {
+    graphics_context_set_fill_color(ctx, GColorBlack);
+    graphics_fill_rect(ctx, GRect(x, y, w, h), 0, GCornerNone);
+  } else {
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    for (int yy = y; yy < y + h; yy += spacing)
+      graphics_draw_line(ctx, GPoint(x, yy), GPoint(x + w - 1, yy));
+  }
+#endif
+}
+
 static void detail_content_draw(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   int w = b.size.w;
@@ -105,7 +131,7 @@ static void detail_content_draw(Layer *layer, GContext *ctx) {
         int segW = (s_zone_secs[k] * barW) / total;
         if (k == s_zone_count - 1) segW = (4 + barW) - x;
         graphics_context_set_fill_color(ctx, zone_color(k));
-        graphics_fill_rect(ctx, GRect(x, BAR_TOP, segW > 0 ? segW - 1 : 0, BAR_H), 0, GCornerNone);
+        draw_zone_segment(ctx, x, BAR_TOP, segW > 0 ? segW - 1 : 0, BAR_H, k);
         x += segW;
       }
       graphics_context_set_stroke_color(ctx, GColorBlack);
