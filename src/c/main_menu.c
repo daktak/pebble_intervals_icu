@@ -30,6 +30,10 @@ static int s_stats_state = ST_IDLE;
 
 static uint16_t get_sections(MenuLayer *m, void *ctx) { return 1; }
 static uint16_t get_rows(MenuLayer *m, uint16_t section, void *ctx) { return 2; }
+static int16_t get_cell_height(MenuLayer *m, MenuIndex *i, void *ctx) {
+  GRect mb = layer_get_bounds(menu_layer_get_layer(m));
+  return mb.size.h / 2 - 4;
+}
 
 static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data) {
   const char *titles[2] = { "Week Activities", "Training Load" };
@@ -127,6 +131,7 @@ static void window_load(Window *window) {
   menu_layer_set_callbacks(s_menu, NULL, (MenuLayerCallbacks){
     .get_num_sections = get_sections,
     .get_num_rows = get_rows,
+    .get_cell_height = get_cell_height,
     .draw_row = draw_row,
     .select_click = select_click,
   });
