@@ -31,7 +31,7 @@ static void present_overlay(void) {
     .load = overlay_load,
     .unload = overlay_unload,
   });
-  window_stack_push(s_overlay, true);
+  window_stack_push(s_overlay, false);
 }
 
 void ui_show_loading(const char *msg) {
