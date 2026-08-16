@@ -167,7 +167,7 @@ function sendActivityDetail(idx) {
     "Elapsed|" + fmtTime(a.elapsed_time),
     "Avg Speed|" + spd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
     "Max Speed|" + maxSpd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
-    "Cadence|" + (a.average_cadence ? a.average_cadence + " rpm" : "-"),
+    "Cadence|" + (a.average_cadence ? Math.round(a.average_cadence) + " rpm" : "-"),
     "Intensity|" + Math.round(a.icu_intensity || 0) + " %",
     "Load|" + Math.round(a.icu_training_load || 0),
     "TRIMP|" + (a.trimp != null ? Math.round(a.trimp) : "-"),
