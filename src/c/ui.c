@@ -48,7 +48,10 @@ void ui_show_error(const char *msg) {
 
 void ui_dismiss_overlay(void) {
   if (s_overlay) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "overlay: dismissing");
     window_destroy(s_overlay);
     s_overlay = NULL;
+  } else {
+    APP_LOG(APP_LOG_LEVEL_INFO, "overlay: dismiss no-op (null)");
   }
 }
