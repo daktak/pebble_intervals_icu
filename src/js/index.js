@@ -109,7 +109,7 @@ function fetchWeek() {
     mondayOfThisWeek() +
     "&newest=" +
     daysAgo(0) +
-    "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,elapsed_time,total_elevation_gain,average_speed,max_speed,icu_intensity,average_cadence,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_variability_index,icu_efficiency_factor,trimp,icu_joules,calories";
+    "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,elapsed_time,total_elevation_gain,average_speed,max_speed,icu_intensity,average_cadence,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_variability_index,icu_efficiency_factor,trimp,icu_joules,calories,icu_zone_times";
   getJSON(url, function (err, data) {
     if (err) {
       console.log("WEEK err=" + err.message);
@@ -180,6 +180,18 @@ function sendActivityDetail(idx) {
     "Work|" + (a.icu_joules ? (a.icu_joules / 1000).toFixed(0) + " kJ" : "-"),
     "Calories|" + (a.calories ? Math.round(a.calories) + " kcal" : "-")
   ];
+  if (a.icu_zone_times && a.icu_zone_times.length) {
+    console.log("ZONES raw=" + JSON.stringify(a.icu_zone_times));
+    var zt = a.icu_zone_times.map(function (x) {
+      if (typeof x === "number") return Math.round(x);
+      if (x && typeof x === "object") {
+        var s = x.secs != null ? x.secs : (x.seconds != null ? x.seconds : (x.time != null ? x.time : 0));
+        return Math.round(s);
+      }
+      return 0;
+    });
+    rows.push("@@ZONES@@|" + zt.join(","));
+  }
   var payload = rows.join("\n");
   console.log("DETAIL sending idx=" + idx + " rows=" + rows.length);
   Pebble.sendAppMessage({ ACTIVITY_DETAIL: payload });
