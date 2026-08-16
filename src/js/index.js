@@ -42,18 +42,23 @@ function getJSON(url, cb) {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url, true);
   xhr.setRequestHeader('Authorization', 'Basic ' + b64encode('API_KEY:' + API_KEY));
+  console.log('FETCH url=' + url.replace(API_KEY, '***'));
+  console.log('FETCH auth=' + (API_KEY ? 'set' : 'MISSING'));
   xhr.onload = function () {
+    console.log('FETCH status=' + xhr.status + ' len=' + (xhr.responseText ? xhr.responseText.length : 0));
     if (xhr.status >= 200 && xhr.status < 300) {
       try {
         cb(null, JSON.parse(xhr.responseText));
       } catch (e) {
+        console.log('FETCH parse error: ' + e.message);
         cb(new Error('bad response'));
       }
     } else {
+      console.log('FETCH http error statusText=' + xhr.statusText);
       cb(new Error('HTTP ' + xhr.status));
     }
   };
-  xhr.onerror = function () { cb(new Error('network error')); };
+  xhr.onerror = function () { console.log('FETCH network error'); cb(new Error('network error')); };
   xhr.send();
 }
 
@@ -63,12 +68,16 @@ function fetchWeek() {
     return;
   }
   var url = 'https://intervals.icu/api/v1/athlete/' + (ATHLETE_ID || '0') +
-    '/activities?oldest=' + daysAgo(6) + '&newest=' + daysAgo(0);
+    '/activities?oldest=' + daysAgo(6) + '&newest=' + daysAgo(0) +
+    '&fields=id,start_date_local,type,name,icu_training_load';
   getJSON(url, function (err, data) {
     if (err) {
-      Pebble.sendAppMessage({ ERR: 'Activities failed: ' + err.message });
+      console.log('WEEK err=' + err.message);
+      Pebble.sendAppMessage({ ERR: 'Activities failed: ' + err.message }, function (e) { console.log('WEEK sendAppMessage result=' + ((e && e.error) ? 'err:' + e.error : 'ok')); });
       return;
     }
+    console.log('WEEK count=' + data.length);
+    if (data.length > 0) console.log('WEEK sampleKeys=' + JSON.stringify(Object.keys(data[0])));
     var lines = [];
     var i;
     for (i = 0; i < data.length; i++) {
@@ -79,7 +88,10 @@ function fetchWeek() {
       var load = a.icu_training_load != null ? a.icu_training_load : 0;
       lines.push(date + '|' + type + '|' + name + '|' + load);
     }
-    Pebble.sendAppMessage({ ACTIVITIES: lines.join('\n') });
+    if (lines.length > 0) console.log('WEEK firstLine=' + lines[0]);
+    var payload = lines.join('\n');
+    console.log('WEEK sending ACTIVITIES len=' + payload.length);
+    Pebble.sendAppMessage({ ACTIVITIES: payload }, function (e) { console.log('WEEK sendAppMessage result=' + ((e && e.error) ? 'err:' + e.error : 'ok')); });
   });
 }
 
@@ -92,29 +104,28 @@ function fetchLoad() {
     '/wellness?oldest=' + daysAgo(27) + '&newest=' + daysAgo(0);
   getJSON(url, function (err, data) {
     if (err) {
-      Pebble.sendAppMessage({ ERR: 'Load failed: ' + err.message });
+      console.log('LOAD err=' + err.message);
+      Pebble.sendAppMessage({ ERR: 'Load failed: ' + err.message }, function (e) { console.log('LOAD sendAppMessage result=' + ((e && e.error) ? 'err:' + e.error : 'ok')); });
       return;
     }
+    console.log('LOAD count=' + data.length);
+    if (data.length > 0) console.log('LOAD sampleKeys=' + JSON.stringify(Object.keys(data[0])));
     var ctl = [];
     var atl = [];
     var last = null;
     var i;
     for (i = 0; i < data.length; i++) {
       var w = data[i];
-      if (typeof w.ctl === 'number') ctl.push(w.ctl);
-      if (typeof w.atl === 'number') atl.push(w.atl);
+      if (typeof w.ctl === 'number') ctl.push(Math.round(w.ctl));
+      if (typeof w.atl === 'number') atl.push(Math.round(w.atl));
       last = w;
     }
-    var c = last && typeof last.ctl === 'number' ? last.ctl : 0;
-    var a = last && typeof last.atl === 'number' ? last.atl : 0;
-    var t = last && typeof last.tsb === 'number' ? last.tsb : 0;
+    var c = last && typeof last.ctl === 'number' ? Math.round(last.ctl) : 0;
+    var a = last && typeof last.atl === 'number' ? Math.round(last.atl) : 0;
+    var t = last && typeof last.tsb === 'number' ? Math.round(last.tsb) : (c - a);
     var series = 'ctl:' + ctl.join(',') + ';atl:' + atl.join(',');
-    Pebble.sendAppMessage({
-      TL_CTL: c,
-      TL_ATL: a,
-      TL_TSB: t,
-      TL_SERIES: series
-    });
+    console.log('LOAD ctl=' + c + ' atl=' + a + ' tsb=' + t + ' seriesLen=' + series.length);
+    Pebble.sendAppMessage({ TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series }, function (e) { console.log('LOAD sendAppMessage result=' + ((e && e.error) ? 'err:' + e.error : 'ok')); });
   });
 }
 

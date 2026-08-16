@@ -12,6 +12,9 @@ static void comm_send_key(uint32_t key, const char *val);
 static void inbox_received(DictionaryIterator *iter, void *context) {
   Tuple *t;
 
+  ui_dismiss_overlay();
+  APP_LOG(APP_LOG_LEVEL_INFO, "inbox: received message");
+
   t = dict_find(iter, MESSAGE_KEY_API_KEY);
   if (t) {
     persist_write_string(PKEY_API_KEY, t->value->cstring);
@@ -26,14 +29,13 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
 
   t = dict_find(iter, MESSAGE_KEY_ERR);
   if (t) {
-    ui_dismiss_overlay();
     ui_show_error(t->value->cstring);
     return;
   }
 
   t = dict_find(iter, MESSAGE_KEY_ACTIVITIES);
   if (t) {
-    ui_dismiss_overlay();
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: ACTIVITIES len=%d", (int)strlen(t->value->cstring));
     activities_show(t->value->cstring);
     return;
   }

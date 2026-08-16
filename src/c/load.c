@@ -75,6 +75,7 @@ static void parse_series(char *series) {
     }
     part = strtok_r(NULL, ";", &save);
   }
+  if (s_n > MAX_PTS) s_n = MAX_PTS;
 }
 
 static void window_load(Window *window) {
@@ -96,7 +97,10 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   text_layer_destroy(s_info);
+  s_info = NULL;
   layer_destroy(s_graph);
+  s_graph = NULL;
+  s_window = NULL;
 }
 
 void load_show(int ctl, int atl, int tsb, char *series) {

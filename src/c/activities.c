@@ -14,40 +14,48 @@ static int s_count = 0;
 static Window *s_window = NULL;
 static MenuLayer *s_menu = NULL;
 static Window *s_detail = NULL;
+static TextLayer *s_detail_tl = NULL;
+static char s_detail_buf[128];
 
 static uint16_t get_sections(MenuLayer *m, void *ctx) { return 1; }
-static uint16_t get_rows(MenuLayer *m, uint16_t section, void *ctx) { return s_count; }
+static uint16_t get_rows(MenuLayer *m, uint16_t section, void *ctx) { return s_count == 0 ? 1 : s_count; }
 
 static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data) {
+  if (s_count == 0) {
+    menu_cell_basic_draw(ctx, cell, "No activities", NULL, NULL);
+    return;
+  }
   static char sub[32];
-  snprintf(sub, sizeof(sub), "L%d  %s", s_loads[i->row], s_types[i->row]);
-  menu_cell_basic_draw(ctx, cell, s_names[i->row], sub, NULL);
+  static char title[NAME_LEN];
+  const char *nm = s_names[i->row][0] ? s_names[i->row]
+    : (s_types[i->row][0] ? s_types[i->row] : s_dates[i->row]);
+  snprintf(title, sizeof(title), "%.28s", nm);
+  snprintf(sub, sizeof(sub), "L%d  %.12s", s_loads[i->row], s_types[i->row]);
+  menu_cell_basic_draw(ctx, cell, title, sub, NULL);
 }
 
 static void detail_load(Window *window) {
-  char *buf = (char *)window_get_user_data(window);
   Layer *root = window_get_root_layer(window);
   GRect b = layer_get_bounds(root);
-  TextLayer *tl = text_layer_create(GRect(5, 5, b.size.w - 10, b.size.h - 10));
-  text_layer_set_font(tl, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-  text_layer_set_text(tl, buf);
-  text_layer_set_text_alignment(tl, GTextAlignmentCenter);
-  text_layer_set_overflow_mode(tl, GTextOverflowModeWordWrap);
-  window_set_user_data(window, tl);
-  layer_add_child(root, text_layer_get_layer(tl));
+  s_detail_tl = text_layer_create(GRect(5, 5, b.size.w - 10, b.size.h - 10));
+  text_layer_set_font(s_detail_tl, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+  text_layer_set_text(s_detail_tl, s_detail_buf);
+  text_layer_set_text_alignment(s_detail_tl, GTextAlignmentCenter);
+  text_layer_set_overflow_mode(s_detail_tl, GTextOverflowModeWordWrap);
+  layer_add_child(root, text_layer_get_layer(s_detail_tl));
 }
 
 static void detail_unload(Window *window) {
-  TextLayer *tl = (TextLayer *)window_get_user_data(window);
-  if (tl) text_layer_destroy(tl);
+  if (s_detail_tl) text_layer_destroy(s_detail_tl);
+  s_detail_tl = NULL;
+  s_detail = NULL;
 }
 
 static void select_click(MenuLayer *m, MenuIndex *i, void *ctx) {
-  static char buf[128];
-  snprintf(buf, sizeof(buf), "%s\n%s\nLoad: %d", s_names[i->row], s_types[i->row], s_loads[i->row]);
+  if (s_count == 0) return;
+  snprintf(s_detail_buf, sizeof(s_detail_buf), "%.28s\n%.12s\nLoad: %d", s_names[i->row], s_types[i->row], s_loads[i->row]);
   if (s_detail) window_destroy(s_detail);
   s_detail = window_create();
-  window_set_user_data(s_detail, buf);
   window_set_window_handlers(s_detail, (WindowHandlers){
     .load = detail_load,
     .unload = detail_unload,
@@ -71,6 +79,8 @@ static void window_load(Window *window) {
 
 static void window_unload(Window *window) {
   menu_layer_destroy(s_menu);
+  s_menu = NULL;
+  s_window = NULL;
 }
 
 void activities_show(char *payload) {

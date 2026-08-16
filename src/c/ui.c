@@ -20,6 +20,7 @@ static void overlay_load(Window *window) {
 static void overlay_unload(Window *window) {
   text_layer_destroy(s_overlay_text);
   s_overlay_text = NULL;
+  s_overlay = NULL;
 }
 
 static void present_overlay(void) {
