@@ -8,16 +8,25 @@
     "defaultValue": "Paste your personal API key from intervals.icu Settings > Developer Settings."
   },
   {
-    "type": "input",
-    "messageKey": "API_KEY",
-    "label": "API Key",
-    "defaultValue": ""
-  },
-  {
-    "type": "input",
-    "messageKey": "ATHLETE_ID",
-    "label": "Athlete ID (0 = you)",
-    "defaultValue": "0"
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Account"
+      },
+      {
+        "type": "input",
+        "messageKey": "API_KEY",
+        "label": "API Key",
+        "defaultValue": ""
+      },
+      {
+        "type": "input",
+        "messageKey": "ATHLETE_ID",
+        "label": "Athlete ID (0 = you)",
+        "defaultValue": "0"
+      }
+    ]
   },
   {
     "type": "submit",
