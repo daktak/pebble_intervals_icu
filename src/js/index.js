@@ -114,6 +114,7 @@ function fetchWeek() {
     console.log("WEEK count=" + data.length);
     if (data.length > 0) console.log("WEEK sampleKeys=" + JSON.stringify(Object.keys(data[0])));
     weekActivities = data;
+    var dows = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     var lines = [];
     var i;
     for (i = 0; i < data.length; i++) {
@@ -122,7 +123,9 @@ function fetchWeek() {
       var type = a.type || "";
       var name = (a.name || "").replace(/[\n|;]/g, " ");
       var load = a.icu_training_load != null ? a.icu_training_load : 0;
-      lines.push(date + "|" + type + "|" + name + "|" + load);
+      var d = new Date(a.start_date_local);
+      var dow = isNaN(d.getDay()) ? "" : dows[d.getDay()];
+      lines.push(date + "|" + type + "|" + name + "|" + load + "|" + dow);
     }
     if (lines.length > 0) console.log("WEEK firstLine=" + lines[0]);
     var payload = lines.join("\n");

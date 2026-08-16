@@ -14,6 +14,7 @@
 static char s_dates[MAX_ACT][12];
 static char s_types[MAX_ACT][16];
 static char s_names[MAX_ACT][NAME_LEN];
+static char s_dows[MAX_ACT][4];
 static int s_loads[MAX_ACT];
 static int s_count = 0;
 
@@ -43,7 +44,7 @@ static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data)
   const char *nm = s_names[i->row][0] ? s_names[i->row]
     : (s_types[i->row][0] ? s_types[i->row] : s_dates[i->row]);
   snprintf(title, sizeof(title), "%.28s", nm);
-  snprintf(sub, sizeof(sub), "L%d  %.12s", s_loads[i->row], s_types[i->row]);
+  snprintf(sub, sizeof(sub), "%s  L%d  %.10s", s_dows[i->row], s_loads[i->row], s_types[i->row]);
   menu_cell_basic_draw(ctx, cell, title, sub, NULL);
 }
 
@@ -150,9 +151,11 @@ void activities_show(char *payload) {
     char *type = strtok_r(NULL, "|", &s2);
     char *name = strtok_r(NULL, "|", &s2);
     char *load = strtok_r(NULL, "|", &s2);
+    char *dow = strtok_r(NULL, "|", &s2);
     if (date) snprintf(s_dates[s_count], 12, "%s", date);
     if (type) snprintf(s_types[s_count], 16, "%s", type);
     if (name) snprintf(s_names[s_count], NAME_LEN, "%s", name);
+    if (dow) snprintf(s_dows[s_count], 4, "%s", dow);
     s_loads[s_count] = load ? atoi(load) : 0;
     s_count++;
     row = strtok_r(NULL, "\n", &save);
