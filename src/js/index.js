@@ -24,6 +24,13 @@ function daysAgo(n) {
   return fmt(d);
 }
 
+function mondayOfThisWeek() {
+  var d = new Date();
+  var off = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - off);
+  return fmt(d);
+}
+
 function claySettings() {
   try {
     var raw = localStorage.getItem("clay-settings");
@@ -99,7 +106,7 @@ function fetchWeek() {
     "https://intervals.icu/api/v1/athlete/" +
     (ATHLETE_ID || "0") +
     "/activities?oldest=" +
-    daysAgo(6) +
+    mondayOfThisWeek() +
     "&newest=" +
     daysAgo(0) +
     "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,total_elevation_gain,average_speed,icu_intensity,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_joules";
@@ -232,12 +239,12 @@ function fetchStats() {
   var actUrl =
     base +
     "/activities?oldest=" +
-    daysAgo(6) +
+    mondayOfThisWeek() +
     "&newest=" +
     daysAgo(0) +
     "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,elapsed_time,total_elevation_gain,calories";
   var wellUrl =
-    base + "/wellness?oldest=" + daysAgo(6) + "&newest=" + daysAgo(0);
+    base + "/wellness?oldest=" + mondayOfThisWeek() + "&newest=" + daysAgo(0);
   getJSON(actUrl, function (err, acts) {
     if (err) {
       console.log("STATS acts err=" + err.message);
