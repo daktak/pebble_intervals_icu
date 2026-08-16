@@ -7,7 +7,8 @@
   ],
   "private": true,
   "dependencies": {
-    "@rebble/clay": "^1.0.10"
+    "@rebble/clay": "^1.0.10",
+    "base-64": "^1.0.0"
   },
   "pebble": {
     "displayName": "Intervals.icu",

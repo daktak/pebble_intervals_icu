@@ -35,6 +35,7 @@ static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data)
 }
 
 static void detail_load(Window *window) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "detail: load");
   Layer *root = window_get_root_layer(window);
   GRect b = layer_get_bounds(root);
   s_detail_tl = text_layer_create(GRect(5, 5, b.size.w - 10, b.size.h - 10));
@@ -46,6 +47,7 @@ static void detail_load(Window *window) {
 }
 
 static void detail_unload(Window *window) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "detail: unload");
   if (s_detail_tl) text_layer_destroy(s_detail_tl);
   s_detail_tl = NULL;
   s_detail = NULL;
@@ -53,17 +55,19 @@ static void detail_unload(Window *window) {
 
 static void select_click(MenuLayer *m, MenuIndex *i, void *ctx) {
   if (s_count == 0) return;
+  if (s_detail) return;
+  APP_LOG(APP_LOG_LEVEL_INFO, "detail: select row=%d", i->row);
   snprintf(s_detail_buf, sizeof(s_detail_buf), "%.28s\n%.12s\nLoad: %d", s_names[i->row], s_types[i->row], s_loads[i->row]);
-  if (s_detail) window_destroy(s_detail);
   s_detail = window_create();
   window_set_window_handlers(s_detail, (WindowHandlers){
     .load = detail_load,
     .unload = detail_unload,
   });
-  window_stack_push(s_detail, true);
+  window_stack_push(s_detail, false);
 }
 
 static void window_load(Window *window) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "activities: window_load");
   Layer *root = window_get_root_layer(window);
   GRect b = layer_get_bounds(root);
   s_menu = menu_layer_create(b);
@@ -78,12 +82,14 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "activities: window_unload");
   menu_layer_destroy(s_menu);
   s_menu = NULL;
   s_window = NULL;
 }
 
 void activities_show(char *payload) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "activities: show");
   s_count = 0;
   char *save;
   char *row = strtok_r(payload, "\n", &save);
@@ -101,6 +107,10 @@ void activities_show(char *payload) {
     row = strtok_r(NULL, "\n", &save);
   }
 
+  if (s_detail) {
+    window_destroy(s_detail);
+    s_detail = NULL;
+  }
   if (s_window) window_destroy(s_window);
   s_window = window_create();
   window_set_window_handlers(s_window, (WindowHandlers){
