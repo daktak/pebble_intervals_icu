@@ -1,0 +1,46 @@
+{
+  "name": "pebble-intervals-icu",
+  "author": "daktak",
+  "version": "0.1.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {
+    "@rebble/clay": "^1.0.10"
+  },
+  "pebble": {
+    "displayName": "Intervals.icu",
+    "shortName": "Intervals",
+    "longName": "Intervals.icu for Pebble",
+    "uuid": "64dad915-a2ff-4c49-af08-4cac85ade262",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "capabilities": [
+      "configurable"
+    ],
+    "messageKeys": [
+      "CMD",
+      "API_KEY",
+      "ATHLETE_ID",
+      "ACTIVITIES",
+      "TL_CTL",
+      "TL_ATL",
+      "TL_TSB",
+      "TL_SERIES",
+      "ERR"
+    ],
+    "resources": {
+      "media": []
+    }
+  }
+}
