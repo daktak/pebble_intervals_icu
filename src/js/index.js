@@ -163,7 +163,7 @@ function sendActivityDetail(idx) {
     "Distance|" + dist.toFixed(1) + " " + distU,
     "Time|" + fmtTime(a.moving_time),
     "Avg Speed|" + spd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
-    "Intensity|" + Math.round((a.icu_intensity || 0) * 100) + " %",
+    "Intensity|" + Math.round(a.icu_intensity || 0) + " %",
     "Load|" + Math.round(a.icu_training_load || 0),
     "Avg HR|" + (a.average_heartrate ? a.average_heartrate + " bpm" : "-"),
     "Max HR|" + (a.max_heartrate ? a.max_heartrate + " bpm" : "-"),
