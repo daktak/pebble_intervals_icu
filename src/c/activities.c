@@ -6,7 +6,7 @@
 
 #define MAX_ACT 32
 #define NAME_LEN 48
-#define MAX_DET 16
+#define MAX_DET 24
 #define DET_LBL 16
 #define DET_VAL 24
 #define ROW_H 22
@@ -64,14 +64,18 @@ static void detail_content_draw(Layer *layer, GContext *ctx) {
     graphics_draw_text(ctx, s_dval[i], f, r, GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
     y += ROW_H;
   }
+  APP_LOG(APP_LOG_LEVEL_INFO, "detail: draw rows=%d", s_dcount);
 }
 
 static void detail_load(Window *window) {
   APP_LOG(APP_LOG_LEVEL_INFO, "detail: load");
   Layer *root = window_get_root_layer(window);
   GRect b = layer_get_bounds(root);
+  window_set_background_color(window, GColorWhite);
   int titleH = 24;
   s_detail_title = text_layer_create(GRect(4, 0, b.size.w - 8, titleH));
+  text_layer_set_background_color(s_detail_title, GColorWhite);
+  text_layer_set_text_color(s_detail_title, GColorBlack);
   text_layer_set_font(s_detail_title, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text(s_detail_title, (s_detail_idx >= 0 && s_detail_idx < s_count && s_names[s_detail_idx][0]) ? s_names[s_detail_idx] : "Activity");
   text_layer_set_text_alignment(s_detail_title, GTextAlignmentLeft);
@@ -79,11 +83,11 @@ static void detail_load(Window *window) {
   layer_add_child(root, text_layer_get_layer(s_detail_title));
 
   int visH = b.size.h - titleH;
-  int contentH = s_detail_loading ? visH : s_dcount * ROW_H;
+  int contentH = s_dcount * ROW_H;
   if (contentH < visH) contentH = visH;
 
   s_detail_scroll = scroll_layer_create(GRect(0, titleH, b.size.w, visH));
-  s_detail_content = layer_create(GRect(0, 0, b.size.w, contentH));
+  s_detail_content = layer_create(GRect(0, 0, b.size.w, MAX_DET * ROW_H));
   layer_set_update_proc(s_detail_content, detail_content_draw);
   scroll_layer_add_child(s_detail_scroll, s_detail_content);
   scroll_layer_set_content_size(s_detail_scroll, GSize(b.size.w, contentH));
@@ -196,12 +200,12 @@ void activities_set_detail(const char *payload) {
     s_dcount++;
   }
   s_detail_loading = false;
+  APP_LOG(APP_LOG_LEVEL_INFO, "detail: set_detail rows=%d", s_dcount);
   if (s_detail_scroll && s_detail_content) {
     GRect sb = layer_get_bounds(scroll_layer_get_layer(s_detail_scroll));
     int contentH = s_dcount * ROW_H;
     if (contentH < sb.size.h) contentH = sb.size.h;
-    layer_set_bounds(s_detail_content, GRect(0, 0, sb.size.w, contentH));
     scroll_layer_set_content_size(s_detail_scroll, GSize(sb.size.w, contentH));
-    layer_mark_dirty(s_detail_content);
+    layer_mark_dirty(scroll_layer_get_layer(s_detail_scroll));
   }
 }

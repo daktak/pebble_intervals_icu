@@ -109,7 +109,7 @@ function fetchWeek() {
     mondayOfThisWeek() +
     "&newest=" +
     daysAgo(0) +
-    "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,total_elevation_gain,average_speed,icu_intensity,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_joules";
+    "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,elapsed_time,total_elevation_gain,average_speed,max_speed,icu_intensity,average_cadence,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_variability_index,icu_efficiency_factor,trimp,icu_joules,calories";
   getJSON(url, function (err, data) {
     if (err) {
       console.log("WEEK err=" + err.message);
@@ -158,18 +158,27 @@ function sendActivityDetail(idx) {
   elv = u === "imperial" ? elv * 3.28084 : elv;
   var spd = a.average_speed || 0;
   spd = u === "imperial" ? spd * 2.23694 : spd * 3.6;
+  var maxSpd = a.max_speed || 0;
+  maxSpd = u === "imperial" ? maxSpd * 2.23694 : maxSpd * 3.6;
   var rows = [
     "Elevation|" + Math.round(elv) + " " + elvU,
     "Distance|" + dist.toFixed(1) + " " + distU,
     "Time|" + fmtTime(a.moving_time),
+    "Elapsed|" + fmtTime(a.elapsed_time),
     "Avg Speed|" + spd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
+    "Max Speed|" + maxSpd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
+    "Cadence|" + (a.average_cadence ? a.average_cadence + " rpm" : "-"),
     "Intensity|" + Math.round(a.icu_intensity || 0) + " %",
     "Load|" + Math.round(a.icu_training_load || 0),
+    "TRIMP|" + (a.trimp != null ? Math.round(a.trimp) : "-"),
     "Avg HR|" + (a.average_heartrate ? a.average_heartrate + " bpm" : "-"),
     "Max HR|" + (a.max_heartrate ? a.max_heartrate + " bpm" : "-"),
     "Norm Power|" + (a.icu_weighted_avg_watts ? a.icu_weighted_avg_watts + " W" : "-"),
     "Avg Power|" + (a.icu_average_watts ? a.icu_average_watts + " W" : "-"),
-    "Work|" + (a.icu_joules ? (a.icu_joules / 1000).toFixed(0) + " kJ" : "-")
+    "VI|" + (a.icu_variability_index != null ? a.icu_variability_index.toFixed(2) : "-"),
+    "EF|" + (a.icu_efficiency_factor != null ? a.icu_efficiency_factor.toFixed(2) : "-"),
+    "Work|" + (a.icu_joules ? (a.icu_joules / 1000).toFixed(0) + " kJ" : "-"),
+    "Calories|" + (a.calories ? Math.round(a.calories) + " kcal" : "-")
   ];
   var payload = rows.join("\n");
   console.log("DETAIL sending idx=" + idx + " rows=" + rows.length);
