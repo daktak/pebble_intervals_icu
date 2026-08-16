@@ -33,12 +33,12 @@ function claySettings() {
 
 function effApiKey() {
   var s = claySettings();
-  return (s.API_KEY && s.API_KEY !== "") ? s.API_KEY : API_KEY;
+  return s.API_KEY && s.API_KEY !== "" ? s.API_KEY : API_KEY;
 }
 
 function effAthleteId() {
   var s = claySettings();
-  return (s.ATHLETE_ID && s.ATHLETE_ID !== "") ? s.ATHLETE_ID : ATHLETE_ID;
+  return s.ATHLETE_ID && s.ATHLETE_ID !== "" ? s.ATHLETE_ID : ATHLETE_ID;
 }
 
 function units() {
@@ -48,7 +48,7 @@ function units() {
 
 function effUnits() {
   var s = claySettings();
-  return (s.UNITS && s.UNITS !== "") ? s.UNITS : units();
+  return s.UNITS && s.UNITS !== "" ? s.UNITS : units();
 }
 
 function getJSON(url, cb) {
@@ -175,8 +175,8 @@ function fetchStats() {
     return;
   }
   var s = claySettings();
-  var aid = (s.ATHLETE_ID && s.ATHLETE_ID !== "") ? s.ATHLETE_ID : ATHLETE_ID;
-  var src = (s.ATHLETE_ID && s.ATHLETE_ID !== "") ? "clay" : "fallback";
+  var aid = s.ATHLETE_ID && s.ATHLETE_ID !== "" ? s.ATHLETE_ID : ATHLETE_ID;
+  var src = s.ATHLETE_ID && s.ATHLETE_ID !== "" ? "clay" : "fallback";
   console.log("STATS aid=" + aid + " src=" + src);
   var base = "https://intervals.icu/api/v1/athlete/" + (aid || "0");
   var actUrl =
@@ -186,7 +186,8 @@ function fetchStats() {
     "&newest=" +
     daysAgo(0) +
     "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,elapsed_time,total_elevation_gain,calories";
-  var wellUrl = base + "/wellness?oldest=" + daysAgo(6) + "&newest=" + daysAgo(0);
+  var wellUrl =
+    base + "/wellness?oldest=" + daysAgo(6) + "&newest=" + daysAgo(0);
   getJSON(actUrl, function (err, acts) {
     if (err) {
       console.log("STATS acts err=" + err.message);
@@ -246,8 +247,8 @@ function fetchStats() {
       var lines = [];
       lines.push("TT " + (tt / 3600).toFixed(1) + "h  TD " + dist.toFixed(1) + distU);
       lines.push("LD " + Math.round(ld) + "  KC " + Math.round(kc));
-      lines.push("EL " + Math.round(elv) + elvU + "  F" + ctl + "/" + atl);
-      lines.push("FM " + (tsb >= 0 ? "+" : "") + tsb + "  RM " + (ramp >= 0 ? "+" : "") + ramp);
+      lines.push("EL " + Math.round(elv) + elvU + " F " + ctl + "/" + atl);
+      lines.push("FM " + (tsb >= 0 ? "+" : "") + tsb + " RM " + (ramp >= 0 ? "+" : "") + ramp);
       var payload = lines.join("\n");
       console.log("STATS sending payload=" + payload);
       Pebble.sendAppMessage({ STATS: payload });
