@@ -35,6 +35,14 @@ static GColor form_color(int tsb) {
   return GColorLightGray;
 }
 
+static GColor graph_color(GColor c) {
+#ifdef PBL_COLOR
+  return c;
+#else
+  return GColorBlack;
+#endif
+}
+
 static void draw_series(Layer *layer, GContext *ctx, int *series, int n, int minv, int maxv, GColor color) {
   GRect b = layer_get_bounds(layer);
   if (n < 2) return;
@@ -46,7 +54,7 @@ static void draw_series(Layer *layer, GContext *ctx, int *series, int n, int min
     int x = pad + (w * i) / (n - 1);
     int y = pad + h - (h * (series[i] - minv)) / (maxv - minv);
     if (i > 0) {
-      graphics_context_set_stroke_color(ctx, color);
+      graphics_context_set_stroke_color(ctx, graph_color(color));
       graphics_draw_line(ctx, GPoint(prev_x, prev_y), GPoint(x, y));
     }
     prev_x = x;
@@ -79,7 +87,7 @@ static void graph_update(Layer *layer, GContext *ctx) {
     int pad = 4;
     int h = b.size.h - pad * 2;
     int zeroy = pad + h - (h * (0 - minv)) / (maxv - minv);
-    graphics_context_set_stroke_color(ctx, GColorLightGray);
+    graphics_context_set_stroke_color(ctx, graph_color(GColorLightGray));
     graphics_draw_line(ctx, GPoint(pad, zeroy), GPoint(b.size.w - pad, zeroy));
     draw_series(layer, ctx, s_tsb_series, s_n, minv, maxv, form_color(s_tsb_now));
   }
