@@ -69,6 +69,13 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     main_menu_set_stats(t->value->cstring);
     return;
   }
+
+  t = dict_find(iter, MESSAGE_KEY_ACTIVITY_DETAIL);
+  if (t) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: ACTIVITY_DETAIL len=%d", (int)strlen(t->value->cstring));
+    activities_set_detail(t->value->cstring);
+    return;
+  }
 }
 
 void comm_send_key(uint32_t key, const char *val) {
@@ -83,6 +90,16 @@ void comm_send_cmd(Cmd cmd) {
   if (app_message_outbox_begin(&out) != APP_MSG_OK) return;
   int32_t c = (int32_t)cmd;
   dict_write_int(out, MESSAGE_KEY_CMD, &c, sizeof(int32_t), true);
+  app_message_outbox_send();
+}
+
+void comm_send_activity_detail(int idx) {
+  DictionaryIterator *out;
+  if (app_message_outbox_begin(&out) != APP_MSG_OK) return;
+  int32_t c = (int32_t)CMD_ACTIVITY_DETAIL;
+  int32_t i = (int32_t)idx;
+  dict_write_int(out, MESSAGE_KEY_CMD, &c, sizeof(int32_t), true);
+  dict_write_int(out, MESSAGE_KEY_ACT_IDX, &i, sizeof(int32_t), true);
   app_message_outbox_send();
 }
 

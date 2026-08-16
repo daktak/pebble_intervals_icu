@@ -8,6 +8,7 @@ var STORE_ID = "icu_athlete_id";
 
 var API_KEY = localStorage.getItem(STORE_KEY) || "";
 var ATHLETE_ID = localStorage.getItem(STORE_ID) || "0";
+var weekActivities = [];
 
 function pad(n) {
   return (n < 10 ? "0" : "") + n;
@@ -51,6 +52,15 @@ function effUnits() {
   return s.UNITS && s.UNITS !== "" ? s.UNITS : units();
 }
 
+function fmtTime(sec) {
+  sec = sec || 0;
+  var h = Math.floor(sec / 3600);
+  var m = Math.floor((sec % 3600) / 60);
+  var s = sec % 60;
+  if (h > 0) return h + ":" + pad(m) + ":" + pad(s);
+  return m + ":" + pad(s);
+}
+
 function getJSON(url, cb) {
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -92,7 +102,7 @@ function fetchWeek() {
     daysAgo(6) +
     "&newest=" +
     daysAgo(0) +
-    "&fields=id,start_date_local,type,name,icu_training_load";
+    "&fields=id,start_date_local,type,name,icu_training_load,distance,moving_time,total_elevation_gain,average_speed,icu_intensity,average_heartrate,max_heartrate,icu_weighted_avg_watts,icu_average_watts,icu_joules";
   getJSON(url, function (err, data) {
     if (err) {
       console.log("WEEK err=" + err.message);
@@ -103,6 +113,7 @@ function fetchWeek() {
     }
     console.log("WEEK count=" + data.length);
     if (data.length > 0) console.log("WEEK sampleKeys=" + JSON.stringify(Object.keys(data[0])));
+    weekActivities = data;
     var lines = [];
     var i;
     for (i = 0; i < data.length; i++) {
@@ -120,6 +131,39 @@ function fetchWeek() {
       console.log("WEEK sendAppMessage result=" + (e && e.error ? "err:" + e.error : "ok"));
     });
   });
+}
+
+function sendActivityDetail(idx) {
+  if (!weekActivities || !weekActivities[idx]) {
+    Pebble.sendAppMessage({ ACTIVITY_DETAIL: "Error|no data" });
+    return;
+  }
+  var a = weekActivities[idx];
+  var u = effUnits();
+  var dist = a.distance || 0;
+  var distU = u === "imperial" ? "mi" : "km";
+  dist = u === "imperial" ? dist / 1609.34 : dist / 1000;
+  var elv = a.total_elevation_gain || 0;
+  var elvU = u === "imperial" ? "ft" : "m";
+  elv = u === "imperial" ? elv * 3.28084 : elv;
+  var spd = a.average_speed || 0;
+  spd = u === "imperial" ? spd * 2.23694 : spd * 3.6;
+  var rows = [
+    "Elevation|" + Math.round(elv) + " " + elvU,
+    "Distance|" + dist.toFixed(1) + " " + distU,
+    "Time|" + fmtTime(a.moving_time),
+    "Avg Speed|" + spd.toFixed(1) + (u === "imperial" ? " mph" : " km/h"),
+    "Intensity|" + Math.round((a.icu_intensity || 0) * 100) + " %",
+    "Load|" + Math.round(a.icu_training_load || 0),
+    "Avg HR|" + (a.average_heartrate ? a.average_heartrate + " bpm" : "-"),
+    "Max HR|" + (a.max_heartrate ? a.max_heartrate + " bpm" : "-"),
+    "Norm Power|" + (a.icu_weighted_avg_watts ? a.icu_weighted_avg_watts + " W" : "-"),
+    "Avg Power|" + (a.icu_average_watts ? a.icu_average_watts + " W" : "-"),
+    "Work|" + (a.icu_joules ? (a.icu_joules / 1000).toFixed(0) + " kJ" : "-")
+  ];
+  var payload = rows.join("\n");
+  console.log("DETAIL sending idx=" + idx + " rows=" + rows.length);
+  Pebble.sendAppMessage({ ACTIVITY_DETAIL: payload });
 }
 
 function fetchLoad() {
@@ -283,6 +327,10 @@ Pebble.addEventListener("appmessage", function (e) {
   } else if (p.CMD === 4) {
     console.log("STATS requested cmd=4");
     fetchStats();
+  } else if (p.CMD === 5) {
+    var idx = (typeof p.ACT_IDX !== "undefined") ? p.ACT_IDX : 0;
+    console.log("DETAIL requested cmd=5 idx=" + idx);
+    sendActivityDetail(idx);
   }
 });
 

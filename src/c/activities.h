@@ -4,5 +4,6 @@
 #include <pebble.h>
 
 void activities_show(char *payload);
+void activities_set_detail(const char *payload);
 
 #endif

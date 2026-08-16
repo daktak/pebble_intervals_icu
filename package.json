@@ -40,7 +40,9 @@
       "TL_SERIES",
       "ERR",
       "STATS",
-      "UNITS"
+      "UNITS",
+      "ACTIVITY_DETAIL",
+      "ACT_IDX"
     ],
     "resources": {
       "media": []
