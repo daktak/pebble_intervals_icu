@@ -20,7 +20,7 @@ static int16_t get_cell_height(MenuLayer *m, MenuIndex *i, void *ctx) {
 }
 
 static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data) {
-  const char *titles[MENU_NUM_ROWS] = { "Weekly Stats", "Week Activities", "Training Load" };
+  const char *titles[MENU_NUM_ROWS] = { "Weekly Stats", "Activities", "Training Load" };
   const char *subs[MENU_NUM_ROWS] = { NULL, NULL, NULL };
   menu_cell_basic_draw(ctx, cell, titles[i->row], subs[i->row], NULL);
 }

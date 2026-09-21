@@ -9,9 +9,10 @@ your wrist.
 - **Weekly Stats** (last 7 days): total time, distance, training load,
   calories, elevation, plus Fitness (CTL), Fatigue (ATL), Form (TSB) and
   ramp. Units follow the **Units** setting (metric default).
-- **Week Activities**: the last 7 days of activities. Tap an activity for a
-  scrollable, two-column detail page (elevation, distance, time, avg speed,
-  intensity, load, avg/max HR, normalized/avg power, work).
+- **Activities**: your most recent 15 activities (newest first, within the
+  last 30 days). Tap an activity for a scrollable, two-column detail page
+  (elevation, distance, time, avg speed, intensity, load, avg/max HR,
+  normalized/avg power, work).
 - **Training Load**: a 28-day Fitness (CTL, green) / Fatigue (ATL, orange)
   graph. Press **DOWN** for the **Form (TSB)** graph, which is colored by
   zone (High Risk, Transition, Optimal, Fresh, Grey Zone) with a current-zone
@@ -42,7 +43,7 @@ Basic auth with `API_KEY` as the username.
 | -------------------- | --------- | ------------------------------------- |
 | Main menu            | Select    | Open Weekly Stats / Activities / Load |
 | Main menu            | Configure | Open settings                         |
-| Week Activities      | Select    | Activity detail (scroll with up/down) |
+| Activities           | Select    | Activity detail (scroll with up/down) |
 | Training Load        | Down      | Form graph                            |
 | Training Load / Form | Up        | Fitness graph (from Form)             |
 | Any page             | Back      | Main menu                             |
