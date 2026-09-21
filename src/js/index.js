@@ -465,7 +465,7 @@ function fetchSeason() {
   var url =
     "https://intervals.icu/api/v1/athlete/" +
     (ATHLETE_ID || "0") +
-    "/power-curves?curves=s0";
+    "/power-curves?curves=s0&type=Ride";
   getJSON(url, function (err, data) {
     if (err) {
       console.log("SEASON err=" + err.message);
@@ -483,9 +483,15 @@ function fetchSeason() {
     } else if (data && data.values) {
       pc = data;
     }
-    if (!pc || !pc.values) {
-      console.log("SEASON no curve data");
-      Pebble.sendAppMessage({ ERR: "No power curve data" });
+    if (!pc || !pc.values || !pc.values.length) {
+      console.log("SEASON no ride power data");
+      var empty = ["-", "-", "-", "-", "-", "-", "-", "-"];
+      var payload =
+        "5s " + empty[0] + "  1m " + empty[1] + "\n" +
+        "5m " + empty[2] + "  20m " + empty[3] + "\n" +
+        "60m " + empty[4] + "  Wkg " + empty[5] + "\n" +
+        "VO2 " + empty[6] + "  Days " + empty[7];
+      Pebble.sendAppMessage({ SEASON: payload });
       return;
     }
     console.log("SEASON label=" + pc.label + " vals=" + pc.values.length +
