@@ -6,10 +6,9 @@ your wrist.
 
 ## Features
 
-- **Main menu summary** (last 7 days, auto-refreshes on open): total time,
-  distance, training load, calories, elevation, plus Fitness (CTL), Fatigue
-  (ATL), Form (TSB) and ramp. Units follow the **Units** setting
-  (metric default).
+- **Weekly Stats** (last 7 days): total time, distance, training load,
+  calories, elevation, plus Fitness (CTL), Fatigue (ATL), Form (TSB) and
+  ramp. Units follow the **Units** setting (metric default).
 - **Week Activities**: the last 7 days of activities. Tap an activity for a
   scrollable, two-column detail page (elevation, distance, time, avg speed,
   intensity, load, avg/max HR, normalized/avg power, work).
@@ -31,8 +30,8 @@ your wrist.
    - **Athlete ID** (the athlete whose data to show — your own, or a coached
      athlete's ID)
    - **Units** (Metric / Imperial)
-3. If the API key or Athlete ID is missing, the main menu prompts you to set
-   them.
+3. If the API key or Athlete ID is missing, selecting a menu item shows a
+   prompt to set them.
 
 The app talks to `https://intervals.icu/api/v1/athlete/{id}/...` using HTTP
 Basic auth with `API_KEY` as the username.
@@ -41,7 +40,7 @@ Basic auth with `API_KEY` as the username.
 
 | Where                | Button    | Action                                |
 | -------------------- | --------- | ------------------------------------- |
-| Main menu            | Select    | Open Week Activities / Training Load  |
+| Main menu            | Select    | Open Weekly Stats / Activities / Load |
 | Main menu            | Configure | Open settings                         |
 | Week Activities      | Select    | Activity detail (scroll with up/down) |
 | Training Load        | Down      | Form graph                            |
@@ -63,9 +62,10 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 
 ## Project layout
 
-- `src/c/` — C firmware: `main.c`, `main_menu.c` (summary + stats),
-  `activities.c` (list + scrollable detail), `load.c` (fitness/form graphs),
-  `comm.c` / `comm.h` (app-message protocol), `ui.c` (loading/error overlay).
+- `src/c/` — C firmware: `main.c`, `main_menu.c` (menu), `stats.c` (weekly
+  stats), `activities.c` (list + scrollable detail), `load.c` (fitness/form
+  graphs), `comm.c` / `comm.h` (app-message protocol), `ui.c` (loading/error
+  overlay).
 - `src/js/index.js` — JS companion: talks to the intervals.icu REST API,
   derives stats, and sends compact messages to the watch.
 - `src/js/config.json` — Clay settings schema (API key, Athlete ID, Units).

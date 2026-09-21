@@ -349,7 +349,6 @@ Pebble.addEventListener("appmessage", function (e) {
     localStorage.setItem("icu_units", p.UNITS);
   }
   if (typeof p.CMD === "undefined") {
-    if (API_KEY) fetchStats();
     return;
   }
   if (p.CMD === 1) {
@@ -370,5 +369,4 @@ Pebble.addEventListener("appmessage", function (e) {
 
 Pebble.addEventListener("ready", function () {
   console.log("Intervals.icu JS ready");
-  if (API_KEY) fetchStats();
 });

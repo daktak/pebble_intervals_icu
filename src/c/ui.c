@@ -20,7 +20,8 @@ static void overlay_load(Window *window) {
 static void overlay_unload(Window *window) {
   text_layer_destroy(s_overlay_text);
   s_overlay_text = NULL;
-  s_overlay = NULL;
+  if (s_overlay == window) s_overlay = NULL;
+  window_destroy(window);
 }
 
 static void present_overlay(void) {
@@ -49,7 +50,7 @@ void ui_show_error(const char *msg) {
 void ui_dismiss_overlay(void) {
   if (s_overlay) {
     APP_LOG(APP_LOG_LEVEL_INFO, "overlay: dismissing");
-    window_destroy(s_overlay);
+    window_stack_remove(s_overlay, false);
     s_overlay = NULL;
   } else {
     APP_LOG(APP_LOG_LEVEL_INFO, "overlay: dismiss no-op (null)");

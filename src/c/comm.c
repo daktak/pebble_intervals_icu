@@ -1,8 +1,8 @@
 #include "comm.h"
 #include "activities.h"
 #include "load.h"
+#include "stats.h"
 #include "ui.h"
-#include "main_menu.h"
 
 #define PKEY_API_KEY 10
 #define PKEY_ATHLETE_ID 11
@@ -18,7 +18,6 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   if (t) {
     persist_write_string(PKEY_API_KEY, t->value->cstring);
     comm_send_key(MESSAGE_KEY_API_KEY, t->value->cstring);
-    main_menu_reload();
   }
   t = dict_find(iter, MESSAGE_KEY_ATHLETE_ID);
   if (t) {
@@ -33,8 +32,9 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
 
   t = dict_find(iter, MESSAGE_KEY_ERR);
   if (t) {
-    if (main_menu_is_loading()) {
-      main_menu_stats_failed();
+    if (stats_is_loading()) {
+      stats_error(t->value->cstring);
+      return;
     }
     ui_show_error(t->value->cstring);
     return;
@@ -43,8 +43,8 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   t = dict_find(iter, MESSAGE_KEY_ACTIVITIES);
   if (t) {
     APP_LOG(APP_LOG_LEVEL_INFO, "inbox: ACTIVITIES len=%d", (int)strlen(t->value->cstring));
-    activities_show(t->value->cstring);
     ui_dismiss_overlay();
+    activities_show(t->value->cstring);
     return;
   }
 
@@ -58,15 +58,15 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     Tuple *ts = dict_find(iter, MESSAGE_KEY_TL_SERIES);
     if (ta) atl = ta->value->int32;
     if (tt) tsb = tt->value->int32;
-    load_show(ctl, atl, tsb, ts ? ts->value->cstring : "");
     ui_dismiss_overlay();
+    load_show(ctl, atl, tsb, ts ? ts->value->cstring : "");
     return;
   }
 
   t = dict_find(iter, MESSAGE_KEY_STATS);
   if (t) {
     APP_LOG(APP_LOG_LEVEL_INFO, "inbox: STATS len=%d", (int)strlen(t->value->cstring));
-    main_menu_set_stats(t->value->cstring);
+    stats_set_data(t->value->cstring);
     return;
   }
 
@@ -101,14 +101,6 @@ void comm_send_activity_detail(int idx) {
   dict_write_int(out, MESSAGE_KEY_CMD, &c, sizeof(int32_t), true);
   dict_write_int(out, MESSAGE_KEY_ACT_IDX, &i, sizeof(int32_t), true);
   app_message_outbox_send();
-}
-
-bool comm_has_api_key(void) {
-  return persist_exists(PKEY_API_KEY);
-}
-
-bool comm_has_athlete_id(void) {
-  return persist_exists(PKEY_ATHLETE_ID);
 }
 
 void comm_init(void) {
