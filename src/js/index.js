@@ -99,6 +99,13 @@ function fmtHours(sec) {
   return h + "h" + pad(m);
 }
 
+function medianOf(arr) {
+  var a = arr.slice().sort(function (x, y) { return x - y; });
+  var n = a.length;
+  if (n === 0) return null;
+  return n % 2 === 1 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2;
+}
+
 function hrValue(w) {
   if (!w) return null;
   if (isNum(w.hrv)) return w.hrv;
@@ -432,6 +439,57 @@ function fetchStats() {
   });
 }
 
+function readinessStatus(data) {
+  var n = data ? data.length : 0;
+  if (n === 0) return { label: "INSF", score: "-" };
+  var today = data[n - 1];
+  var hb = [];
+  var rb = [];
+  var i;
+  for (i = 0; i < n - 1; i++) {
+    var hv = hrValue(data[i]);
+    if (hv != null) hb.push(hv);
+    if (isNum(data[i].restingHR)) rb.push(data[i].restingHR);
+  }
+  var hmed = hb.length >= 2 ? medianOf(hb) : null;
+  var rmed = rb.length >= 2 ? medianOf(rb) : null;
+
+  var subs = [];
+  function add(s) { subs.push(s); }
+  if (isNum(today.sleepScore)) {
+    add(today.sleepScore >= 85 ? 1 : today.sleepScore >= 70 ? 0 : today.sleepScore >= 55 ? -1 : -2);
+  }
+  var hrv = hrValue(today);
+  if (hrv != null && hmed != null) {
+    var ratio = hrv / hmed;
+    add(ratio >= 1.06 ? 1 : ratio > 0.95 ? 0 : ratio >= 0.80 ? -1 : -2);
+  }
+  if (isNum(today.restingHR) && rmed != null) {
+    var delta = today.restingHR - rmed;
+    add(delta <= 1 ? 1 : delta <= 4 ? 0 : delta <= 8 ? -1 : -2);
+  }
+  if (isNum(today.stress)) {
+    add(today.stress <= 25 ? 1 : today.stress <= 50 ? 0 : today.stress <= 75 ? -1 : -2);
+  }
+  var tsb = isNum(today.tsb) ? today.tsb :
+    (isNum(today.ctl) && isNum(today.atl) ? today.ctl - today.atl : null);
+  if (tsb != null) {
+    add(tsb >= 5 ? 1 : tsb >= -10 ? 0 : tsb >= -20 ? -1 : -2);
+  }
+  if (subs.length < 2) return { label: "INSF", score: "-" };
+  var total = 0;
+  for (i = 0; i < subs.length; i++) total += subs[i];
+
+  if (isNum(today.restingHR) && hrv != null && rmed != null && hmed != null &&
+      today.restingHR - rmed >= 5 && hrv / hmed <= 0.90) {
+    return { label: "ILL RISK", score: total };
+  }
+  if (tsb != null && tsb < -20) return { label: "OVERTRAINED", score: total };
+  if (total >= 2) return { label: "READY", score: total };
+  if (total <= -2) return { label: "FATIGUED", score: total };
+  return { label: "NORMAL", score: total };
+}
+
 function fetchToday() {
   API_KEY = effApiKey();
   ATHLETE_ID = effAthleteId();
@@ -443,7 +501,7 @@ function fetchToday() {
     "https://intervals.icu/api/v1/athlete/" +
     (ATHLETE_ID || "0") +
     "/wellness?oldest=" +
-    daysAgo(1) +
+    daysAgo(13) +
     "&newest=" +
     daysAgo(0);
   getJSON(url, function (err, data) {
@@ -456,7 +514,11 @@ function fetchToday() {
     console.log("TODAY count=" + (data ? data.length : 0));
     if (w) console.log("TODAY sampleKeys=" + JSON.stringify(Object.keys(w)));
     var hrv = w ? hrValue(w) : null;
+    var st = readinessStatus(data);
+    var header = "@" + st.label;
+    if (typeof st.score === "number") header += " " + (st.score >= 0 ? "+" : "") + st.score;
     var lines = [];
+    lines.push(header);
     lines.push("RHR " + roundVal(w ? w.restingHR : null) + "  HRV " + (hrv == null ? "-" : Math.round(hrv)));
     lines.push("Sleep " + roundVal(w ? w.sleepScore : null) + "  Time " + fmtHours(w ? w.sleepSecs : null));
     lines.push("Read " + roundVal(w ? w.readiness : null) + "  Stress " + roundVal(w ? w.stress : null));

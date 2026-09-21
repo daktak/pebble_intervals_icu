@@ -6,9 +6,13 @@
 #ifdef PBL_PLATFORM_EMERY
   #define GLANCE_FONT FONT_KEY_GOTHIC_24
   #define GLANCE_ROW_H 28
+  #define GLANCE_HEADER_FONT FONT_KEY_GOTHIC_28_BOLD
+  #define GLANCE_HEADER_H 36
 #else
   #define GLANCE_FONT FONT_KEY_GOTHIC_14
   #define GLANCE_ROW_H 18
+  #define GLANCE_HEADER_FONT FONT_KEY_GOTHIC_18_BOLD
+  #define GLANCE_HEADER_H 24
 #endif
 #define GLANCE_PAD 6
 #define GLANCE_MAX_ROWS 5
@@ -28,6 +32,9 @@ static char s_status[40];
 static GColor s_status_color;
 static int s_state = ST_IDLE;
 static int s_rows = 0;
+static char s_header_text[24];
+static GColor s_header_color;
+static bool s_header_on = false;
 
 static void copy_token(char *dst, int max, const char **pp) {
   int i = 0;
@@ -39,6 +46,23 @@ static void copy_token(char *dst, int max, const char **pp) {
   dst[i] = '\0';
 }
 
+static GColor status_color_for(const char *t) {
+  char word[16];
+  int i = 0;
+  while (*t && *t != ' ' && *t != '\t' && i < 15) word[i++] = *t++;
+  word[i] = '\0';
+#ifdef PBL_COLOR
+  if (strcmp(word, "READY") == 0) return GColorGreen;
+  if (strcmp(word, "NORMAL") == 0) return GColorBlue;
+  if (strcmp(word, "FATIGUED") == 0) return GColorOrange;
+  if (strcmp(word, "OVERTRAINED") == 0 || strcmp(word, "ILL") == 0) return GColorRed;
+  return GColorDarkGray;
+#else
+  (void)word;
+  return GColorBlack;
+#endif
+}
+
 static void glance_layer_update(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   int w = b.size.w;
@@ -46,6 +70,14 @@ static void glance_layer_update(Layer *layer, GContext *ctx) {
   if (s_state == ST_DONE) {
     graphics_context_set_text_color(ctx, GColorBlack);
     int y = GLANCE_PAD;
+    if (s_header_on) {
+      graphics_context_set_text_color(ctx, s_header_color);
+      GRect hr = GRect(GLANCE_PAD, y, w - GLANCE_PAD * 2, GLANCE_HEADER_H);
+      graphics_draw_text(ctx, s_header_text, fonts_get_system_font(GLANCE_HEADER_FONT), hr,
+                         GTextOverflowModeTrailingEllipsis, GTextAlignmentLeft, NULL);
+      y += GLANCE_HEADER_H;
+      graphics_context_set_text_color(ctx, GColorBlack);
+    }
     int leftX = GLANCE_PAD;
     int rightW = w - GLANCE_PAD * 2;
     for (int i = 0; i < s_rows; i++) {
@@ -90,6 +122,9 @@ void glance_show(Cmd cmd, const char *loading_msg) {
     s_v2[i][0] = '\0';
   }
   s_rows = 0;
+  s_header_on = false;
+  s_header_text[0] = '\0';
+  s_header_color = GColorBlack;
   snprintf(s_status, sizeof(s_status), "%s", loading_msg ? loading_msg : "Loading...");
   s_status_color = GColorBlack;
   s_state = ST_LOADING;
@@ -113,6 +148,18 @@ void glance_set_data(const char *payload) {
     while (*p && *p != '\n' && li < (int)sizeof(line) - 1) line[li++] = *p++;
     line[li] = '\0';
     if (*p == '\n') p++;
+    if (row == 0 && line[0] == '@') {
+      const char *ht = line + 1;
+      while (*ht == ' ' || *ht == '\t') ht++;
+      snprintf(s_header_text, sizeof(s_header_text), "%s", ht);
+      size_t ln = strlen(s_header_text);
+      while (ln > 0 && (s_header_text[ln - 1] == ' ' || s_header_text[ln - 1] == '\t')) {
+        s_header_text[--ln] = '\0';
+      }
+      s_header_color = status_color_for(line + 1);
+      s_header_on = true;
+      continue;
+    }
     const char *q = line;
     copy_token(s_l1[row], sizeof(s_l1[row]), &q);
     copy_token(s_v1[row], sizeof(s_v1[row]), &q);
