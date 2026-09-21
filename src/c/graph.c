@@ -5,7 +5,7 @@
 #define LABEL_FONT FONT_KEY_GOTHIC_14
 #define LEFT_MARGIN 26
 #define TOP_MARGIN 9
-#define BOTTOM_MARGIN 13
+#define BOTTOM_MARGIN 24
 #define RIGHT_MARGIN 2
 
 static GColor line_color_of(GColor c) {
