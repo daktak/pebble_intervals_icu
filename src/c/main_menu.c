@@ -1,9 +1,11 @@
 #include "main_menu.h"
 #include "comm.h"
+#include "season.h"
 #include "stats.h"
+#include "today.h"
 #include "ui.h"
 
-#define MENU_NUM_ROWS 3
+#define MENU_NUM_ROWS 6
 #define MENU_CELL_HEIGHT 36
 
 static Window *s_window;
@@ -20,25 +22,38 @@ static int16_t get_cell_height(MenuLayer *m, MenuIndex *i, void *ctx) {
 }
 
 static void draw_row(GContext *ctx, const Layer *cell, MenuIndex *i, void *data) {
-  const char *titles[MENU_NUM_ROWS] = { "Weekly Stats", "Activities", "Training Load" };
-  const char *subs[MENU_NUM_ROWS] = { NULL, NULL, NULL };
+  const char *titles[MENU_NUM_ROWS] = {
+    "Today", "Weekly Stats", "Activities", "Training Load", "Trends", "Season Bests"
+  };
+  const char *subs[MENU_NUM_ROWS] = { NULL, NULL, NULL, NULL, NULL, NULL };
   menu_cell_basic_draw(ctx, cell, titles[i->row], subs[i->row], NULL);
 }
 
 static void select_click(MenuLayer *m, MenuIndex *i, void *ctx) {
   switch (i->row) {
     case 0:
-      stats_show();
+      today_show();
       break;
     case 1:
-      ui_dismiss_overlay();
-      ui_show_loading("Loading...");
-      comm_send_cmd(CMD_WEEK);
+      stats_show();
       break;
     case 2:
       ui_dismiss_overlay();
       ui_show_loading("Loading...");
+      comm_send_cmd(CMD_WEEK);
+      break;
+    case 3:
+      ui_dismiss_overlay();
+      ui_show_loading("Loading...");
       comm_send_cmd(CMD_LOAD);
+      break;
+    case 4:
+      ui_dismiss_overlay();
+      ui_show_loading("Loading...");
+      comm_send_cmd(CMD_TRENDS);
+      break;
+    case 5:
+      season_show();
       break;
   }
 }

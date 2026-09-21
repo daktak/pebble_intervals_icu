@@ -1,7 +1,11 @@
 #include "comm.h"
 #include "activities.h"
+#include "glance.h"
 #include "load.h"
+#include "season.h"
 #include "stats.h"
+#include "today.h"
+#include "trend.h"
 #include "ui.h"
 
 #define PKEY_API_KEY 10
@@ -32,8 +36,8 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
 
   t = dict_find(iter, MESSAGE_KEY_ERR);
   if (t) {
-    if (stats_is_loading()) {
-      stats_error(t->value->cstring);
+    if (glance_is_loading()) {
+      glance_error(t->value->cstring);
       return;
     }
     ui_show_error(t->value->cstring);
@@ -74,6 +78,28 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   if (t) {
     APP_LOG(APP_LOG_LEVEL_INFO, "inbox: ACTIVITY_DETAIL len=%d", (int)strlen(t->value->cstring));
     activities_set_detail(t->value->cstring);
+    return;
+  }
+
+  t = dict_find(iter, MESSAGE_KEY_TODAY);
+  if (t) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: TODAY len=%d", (int)strlen(t->value->cstring));
+    today_set_data(t->value->cstring);
+    return;
+  }
+
+  t = dict_find(iter, MESSAGE_KEY_SEASON);
+  if (t) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: SEASON len=%d", (int)strlen(t->value->cstring));
+    season_set_data(t->value->cstring);
+    return;
+  }
+
+  t = dict_find(iter, MESSAGE_KEY_TRENDS);
+  if (t) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "inbox: TRENDS len=%d", (int)strlen(t->value->cstring));
+    ui_dismiss_overlay();
+    trend_show(t->value->cstring);
     return;
   }
 }

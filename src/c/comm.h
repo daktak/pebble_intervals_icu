@@ -8,7 +8,10 @@ typedef enum {
   CMD_WEEK = 2,
   CMD_LOAD = 3,
   CMD_STATS = 4,
-  CMD_ACTIVITY_DETAIL = 5
+  CMD_ACTIVITY_DETAIL = 5,
+  CMD_TODAY = 6,
+  CMD_SEASON = 7,
+  CMD_TRENDS = 8
 } Cmd;
 
 void comm_init(void);

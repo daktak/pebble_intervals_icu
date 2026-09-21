@@ -6,9 +6,13 @@ your wrist.
 
 ## Features
 
+- **Today** (readiness): resting HR, HRV, sleep score + time, readiness,
+  stress, steps and VO2max for the latest day. Values show `-` when no
+  wearable data is available.
 - **Weekly Stats** (last 7 days): total time, distance, training load,
-  calories, elevation, plus Fitness (CTL), Fatigue (ATL), Form (TSB) and
-  ramp. Units follow the **Units** setting (metric default).
+  calories, elevation, plus Fitness (CTL), Fatigue (ATL), Form (TSB), ramp,
+  estimated FTP (eFTP) and a consecutive activity-day streak. Units follow
+  the **Units** setting (metric default).
 - **Activities**: your most recent 15 activities (newest first, within the
   last 30 days). Tap an activity for a scrollable, two-column detail page
   (elevation, distance, time, avg speed, intensity, load, avg/max HR,
@@ -17,6 +21,10 @@ your wrist.
   graph. Press **DOWN** for the **Form (TSB)** graph, which is colored by
   zone (High Risk, Transition, Optimal, Fresh, Grey Zone) with a current-zone
   label. **UP** returns to the fitness graph; **BACK** returns to the menu.
+- **Trends**: 28-day line charts of Sleep score, HRV and Resting HR.
+  Press **UP**/**DOWN** to switch metric.
+- **Season Bests**: power-curve bests (5s / 1m / 5m / 20m / 60m), watts/kg,
+  VO2max estimate and curve coverage days.
 - **Settings**: set your Intervals.icu API key, Athlete ID, and Units from the
   Pebble app's configuration page (Clay).
 
@@ -41,11 +49,12 @@ Basic auth with `API_KEY` as the username.
 
 | Where                | Button    | Action                                |
 | -------------------- | --------- | ------------------------------------- |
-| Main menu            | Select    | Open Weekly Stats / Activities / Load |
+| Main menu            | Select    | Open Today / Stats / Activities / Load / Trends / Season Bests |
 | Main menu            | Configure | Open settings                         |
 | Activities           | Select    | Activity detail (scroll with up/down) |
 | Training Load        | Down      | Form graph                            |
 | Training Load / Form | Up        | Fitness graph (from Form)             |
+| Trends               | Up/Down   | Switch Sleep / HRV / Resting HR       |
 | Any page             | Back      | Main menu                             |
 
 ## Building
@@ -63,9 +72,11 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 
 ## Project layout
 
-- `src/c/` — C firmware: `main.c`, `main_menu.c` (menu), `stats.c` (weekly
-  stats), `activities.c` (list + scrollable detail), `load.c` (fitness/form
-  graphs), `comm.c` / `comm.h` (app-message protocol), `ui.c` (loading/error
+- `src/c/` — C firmware: `main.c`, `main_menu.c` (menu), `glance.c`
+  (shared 2-column stats window), `stats.c` (weekly stats), `today.c`
+  (readiness), `season.c` (season bests), `activities.c` (list + scrollable
+  detail), `load.c` (fitness/form graphs), `trend.c` (sleep/HRV/resting-HR
+  trends), `comm.c` / `comm.h` (app-message protocol), `ui.c` (loading/error
   overlay).
 - `src/js/index.js` — JS companion: talks to the intervals.icu REST API,
   derives stats, and sends compact messages to the watch.
@@ -75,7 +86,8 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 ## App-message keys
 
 `CMD`, `API_KEY`, `ATHLETE_ID`, `ACTIVITIES`, `TL_CTL`, `TL_ATL`, `TL_TSB`,
-`TL_SERIES`, `ERR`, `STATS`, `UNITS`, `ACTIVITY_DETAIL`, `ACT_IDX`.
+`TL_SERIES`, `ERR`, `STATS`, `UNITS`, `ACTIVITY_DETAIL`, `ACT_IDX`,
+`TODAY`, `SEASON`, `TRENDS`.
 
 ## Notes
 

@@ -42,7 +42,10 @@
       "STATS",
       "UNITS",
       "ACTIVITY_DETAIL",
-      "ACT_IDX"
+      "ACT_IDX",
+      "TODAY",
+      "SEASON",
+      "TRENDS"
     ],
     "resources": {
       "media": []
