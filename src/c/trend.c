@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "trend.h"
+#include "graph.h"
 #include <pebble.h>
 #include <string.h>
 
@@ -12,6 +13,8 @@
 static int s_series[MODE_COUNT][MAX_PTS];
 static int s_n = 0;
 static int s_mode = MODE_SLEEP;
+static char s_x0[8];
+static char s_x1[8];
 
 static Window *s_window = NULL;
 static TextLayer *s_info = NULL;
@@ -43,6 +46,19 @@ static GColor mode_color(int mode) {
 #endif
 }
 
+static GColor mode_fill(int mode) {
+#ifdef PBL_COLOR
+  switch (mode) {
+    case MODE_HRV: return GColorFromRGBA(0, 170, 190, 80);
+    case MODE_RHR: return GColorFromRGBA(0, 140, 60, 80);
+    case MODE_SLEEP:
+    default: return GColorFromRGBA(140, 60, 180, 80);
+  }
+#else
+  return GColorLightGray;
+#endif
+}
+
 static int mode_last(void) {
   int *s = series_for(s_mode);
   return s_n > 0 ? s[s_n - 1] : 0;
@@ -65,28 +81,27 @@ static void graph_update(Layer *layer, GContext *ctx) {
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     return;
   }
-  int minv = 100000;
-  int maxv = -100000;
-  for (int i = 0; i < s_n; i++) {
-    if (s[i] > maxv) maxv = s[i];
-    if (s[i] < minv) minv = s[i];
+  int minv, maxv;
+  if (s_mode == MODE_SLEEP) {
+    minv = 0;
+    maxv = 100;
+  } else {
+    minv = 100000;
+    maxv = -100000;
+    for (int i = 0; i < s_n; i++) {
+      if (s[i] > maxv) maxv = s[i];
+      if (s[i] < minv) minv = s[i];
+    }
   }
   if (maxv <= minv) maxv = minv + 1;
-  int pad = 4;
-  int w = b.size.w - pad * 2;
-  int h = b.size.h - pad * 2;
-  int prev_x = 0;
-  int prev_y = 0;
-  graphics_context_set_stroke_color(ctx, mode_color(s_mode));
-  for (int i = 0; i < s_n; i++) {
-    int x = pad + (w * i) / (s_n - 1);
-    int y = pad + h - (h * (s[i] - minv)) / (maxv - minv);
-    if (i > 0) {
-      graphics_draw_line(ctx, GPoint(prev_x, prev_y), GPoint(x, y));
-    }
-    prev_x = x;
-    prev_y = y;
-  }
+  GraphStyle st;
+  memset(&st, 0, sizeof(st));
+  st.line = mode_color(s_mode);
+  st.has_fill = true;
+  st.fill = mode_fill(s_mode);
+  st.x0 = s_x0;
+  st.x1 = s_x1;
+  graph_draw_series(ctx, b, s, s_n, minv, maxv, &st);
 }
 
 static void next_mode(void) {
@@ -164,8 +179,10 @@ static void parse_series(char *series) {
   if (s_n > MAX_PTS) s_n = MAX_PTS;
 }
 
-void trend_show(char *series) {
+void trend_show(char *series, const char *x0, const char *x1) {
   s_mode = MODE_SLEEP;
+  snprintf(s_x0, sizeof(s_x0), "%s", x0 ? x0 : "");
+  snprintf(s_x1, sizeof(s_x1), "%s", x1 ? x1 : "");
   parse_series(series);
 
   if (s_window) window_destroy(s_window);

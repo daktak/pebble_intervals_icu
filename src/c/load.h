@@ -3,6 +3,6 @@
 
 #include <pebble.h>
 
-void load_show(int ctl, int atl, int tsb, char *series);
+void load_show(int ctl, int atl, int tsb, char *series, const char *x0, const char *x1);
 
 #endif

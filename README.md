@@ -87,7 +87,7 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 
 `CMD`, `API_KEY`, `ATHLETE_ID`, `ACTIVITIES`, `TL_CTL`, `TL_ATL`, `TL_TSB`,
 `TL_SERIES`, `ERR`, `STATS`, `UNITS`, `ACTIVITY_DETAIL`, `ACT_IDX`,
-`TODAY`, `SEASON`, `TRENDS`.
+`TODAY`, `SEASON`, `TRENDS`, `AXIS`.
 
 ## Notes
 

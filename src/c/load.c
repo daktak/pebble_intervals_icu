@@ -1,6 +1,8 @@
 #define _GNU_SOURCE
 #include "load.h"
+#include "graph.h"
 #include <pebble.h>
+#include <string.h>
 
 #define MAX_PTS 64
 #define MODE_FITNESS 0
@@ -14,6 +16,8 @@ static int s_ctl_now = 0;
 static int s_atl_now = 0;
 static int s_tsb_now = 0;
 static int s_mode = MODE_FITNESS;
+static char s_x0[8];
+static char s_x1[8];
 
 static Window *s_window = NULL;
 static TextLayer *s_info = NULL;
@@ -35,34 +39,12 @@ static GColor form_color(int tsb) {
   return GColorLightGray;
 }
 
-static GColor graph_color(GColor c) {
-#ifdef PBL_COLOR
-  return c;
-#else
-  return GColorBlack;
-#endif
-}
-
-static void draw_series(Layer *layer, GContext *ctx, int *series, int n, int minv, int maxv, GColor color) {
-  GRect b = layer_get_bounds(layer);
-  if (n < 2) return;
-  int pad = 4;
-  int w = b.size.w - pad * 2;
-  int h = b.size.h - pad * 2;
-  int prev_x = 0, prev_y = 0;
-  for (int i = 0; i < n; i++) {
-    int x = pad + (w * i) / (n - 1);
-    int y = pad + h - (h * (series[i] - minv)) / (maxv - minv);
-    if (i > 0) {
-      graphics_context_set_stroke_color(ctx, graph_color(color));
-      graphics_draw_line(ctx, GPoint(prev_x, prev_y), GPoint(x, y));
-    }
-    prev_x = x;
-    prev_y = y;
-  }
-}
-
 static void graph_update(Layer *layer, GContext *ctx) {
+  GRect b = layer_get_bounds(layer);
+  GraphStyle st;
+  memset(&st, 0, sizeof(st));
+  st.x0 = s_x0;
+  st.x1 = s_x1;
   if (s_mode == MODE_FITNESS) {
     int maxv = 0;
     int minv = 100000;
@@ -73,8 +55,11 @@ static void graph_update(Layer *layer, GContext *ctx) {
       if (s_atl[i] < minv) minv = s_atl[i];
     }
     if (maxv <= minv) maxv = minv + 1;
-    draw_series(layer, ctx, s_ctl, s_n, minv, maxv, GColorGreen);
-    draw_series(layer, ctx, s_atl, s_n, minv, maxv, GColorOrange);
+    st.line = GColorGreen;
+    st.has_fill = false;
+    graph_draw_series(ctx, b, s_ctl, s_n, minv, maxv, &st);
+    st.line = GColorOrange;
+    graph_draw_series(ctx, b, s_atl, s_n, minv, maxv, &st);
   } else {
     int maxv = -100000;
     int minv = 100000;
@@ -83,13 +68,11 @@ static void graph_update(Layer *layer, GContext *ctx) {
       if (s_tsb_series[i] < minv) minv = s_tsb_series[i];
     }
     if (maxv <= minv) maxv = minv + 1;
-    GRect b = layer_get_bounds(layer);
-    int pad = 4;
-    int h = b.size.h - pad * 2;
-    int zeroy = pad + h - (h * (0 - minv)) / (maxv - minv);
-    graphics_context_set_stroke_color(ctx, graph_color(GColorLightGray));
-    graphics_draw_line(ctx, GPoint(pad, zeroy), GPoint(b.size.w - pad, zeroy));
-    draw_series(layer, ctx, s_tsb_series, s_n, minv, maxv, form_color(s_tsb_now));
+    st.line = form_color(s_tsb_now);
+    st.has_fill = true;
+    st.fill = GColorFromRGBA(70, 70, 70, 80);
+    st.zero_line = true;
+    graph_draw_series(ctx, b, s_tsb_series, s_n, minv, maxv, &st);
   }
 }
 
@@ -181,10 +164,12 @@ static void window_unload(Window *window) {
   s_window = NULL;
 }
 
-void load_show(int ctl, int atl, int tsb, char *series) {
+void load_show(int ctl, int atl, int tsb, char *series, const char *x0, const char *x1) {
   s_ctl_now = ctl;
   s_atl_now = atl;
   s_tsb_now = tsb;
+  snprintf(s_x0, sizeof(s_x0), "%s", x0 ? x0 : "");
+  snprintf(s_x1, sizeof(s_x1), "%s", x1 ? x1 : "");
   s_mode = MODE_FITNESS;
   parse_series(series);
 

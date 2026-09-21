@@ -45,7 +45,8 @@
       "ACT_IDX",
       "TODAY",
       "SEASON",
-      "TRENDS"
+      "TRENDS",
+      "AXIS"
     ],
     "resources": {
       "media": []

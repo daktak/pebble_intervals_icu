@@ -13,6 +13,23 @@
 
 static void comm_send_key(uint32_t key, const char *val);
 
+static void parse_axis(DictionaryIterator *iter, char *a0, size_t n0, char *a1, size_t n1) {
+  a0[0] = '\0';
+  a1[0] = '\0';
+  Tuple *tax = dict_find(iter, MESSAGE_KEY_AXIS);
+  if (!tax) return;
+  const char *p = tax->value->cstring;
+  if (!p) return;
+  while (*p == ' ' || *p == '\t') p++;
+  size_t i = 0;
+  while (*p && *p != ' ' && *p != '\t' && i < n0 - 1) a0[i++] = *p++;
+  a0[i] = '\0';
+  while (*p == ' ' || *p == '\t') p++;
+  i = 0;
+  while (*p && *p != ' ' && *p != '\t' && i < n1 - 1) a1[i++] = *p++;
+  a1[i] = '\0';
+}
+
 static void inbox_received(DictionaryIterator *iter, void *context) {
   Tuple *t;
 
@@ -62,8 +79,10 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     Tuple *ts = dict_find(iter, MESSAGE_KEY_TL_SERIES);
     if (ta) atl = ta->value->int32;
     if (tt) tsb = tt->value->int32;
+    char ax0[8], ax1[8];
+    parse_axis(iter, ax0, sizeof(ax0), ax1, sizeof(ax1));
     ui_dismiss_overlay();
-    load_show(ctl, atl, tsb, ts ? ts->value->cstring : "");
+    load_show(ctl, atl, tsb, ts ? ts->value->cstring : "", ax0, ax1);
     return;
   }
 
@@ -98,8 +117,10 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
   t = dict_find(iter, MESSAGE_KEY_TRENDS);
   if (t) {
     APP_LOG(APP_LOG_LEVEL_INFO, "inbox: TRENDS len=%d", (int)strlen(t->value->cstring));
+    char ax0[8], ax1[8];
+    parse_axis(iter, ax0, sizeof(ax0), ax1, sizeof(ax1));
     ui_dismiss_overlay();
-    trend_show(t->value->cstring);
+    trend_show(t->value->cstring, ax0, ax1);
     return;
   }
 }

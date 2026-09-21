@@ -27,6 +27,18 @@ function daysAgo(n) {
   return fmt(d);
 }
 
+function axisShort(d) {
+  var p = ("" + d).split("-");
+  return p.length === 3 ? p[1] + "-" + p[2] : "" + d;
+}
+
+function axisOf(data) {
+  if (!data || !data.length) return "";
+  var d0 = data[0].date || daysAgo(data.length - 1);
+  var d1 = data[data.length - 1].date || daysAgo(0);
+  return axisShort(d0) + " " + axisShort(d1);
+}
+
 function mondayOfThisWeek() {
   var d = new Date();
   var off = (d.getDay() + 6) % 7;
@@ -304,7 +316,7 @@ function fetchLoad() {
     var t = last && typeof last.tsb === "number" ? Math.round(last.tsb) : c - a;
     var series = "ctl:" + ctl.join(",") + ";atl:" + atl.join(",") + ";tsb:" + tsb.join(",");
     console.log("LOAD ctl=" + c + " atl=" + a + " tsb=" + t + " seriesLen=" + series.length);
-    Pebble.sendAppMessage({ TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series }, function (e) {
+    Pebble.sendAppMessage({ TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series, AXIS: axisOf(data) }, function (e) {
       console.log("LOAD sendAppMessage result=" + (e && e.error ? "err:" + e.error : "ok"));
     });
   });
@@ -544,7 +556,7 @@ function fetchTrends() {
       ";hrv:" + hrv.join(",") +
       ";sleep:" + slp.join(",");
     console.log("TRENDS n=" + rhr.length + "/" + hrv.length + "/" + slp.length + " len=" + series.length);
-    Pebble.sendAppMessage({ TRENDS: series });
+    Pebble.sendAppMessage({ TRENDS: series, AXIS: axisOf(data || []) });
   });
 }
 
