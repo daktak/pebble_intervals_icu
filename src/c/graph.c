@@ -7,6 +7,7 @@
 #define TOP_MARGIN 9
 #define BOTTOM_MARGIN 24
 #define RIGHT_MARGIN 2
+#define BARS_LEFT_MARGIN 42
 
 static GColor line_color_of(GColor c) {
   return PBL_IF_COLOR_ELSE(c, GColorBlack);
@@ -138,9 +139,9 @@ void graph_draw_series(GContext *ctx, GRect bounds, const int *series, int n,
 void graph_draw_bars(GContext *ctx, GRect bounds, const float *vals, int n,
                      float maxv, GColor color, float avg) {
   if (n < 1) return;
-  GRect plot = GRect(bounds.origin.x + LEFT_MARGIN,
+  GRect plot = GRect(bounds.origin.x + BARS_LEFT_MARGIN,
                      bounds.origin.y + 8,
-                     bounds.size.w - LEFT_MARGIN - RIGHT_MARGIN,
+                     bounds.size.w - BARS_LEFT_MARGIN - RIGHT_MARGIN,
                      bounds.size.h - 8 - 4);
   if (plot.size.w < 4 || plot.size.h < 4) return;
   int base = plot.origin.y + plot.size.h;
@@ -173,4 +174,23 @@ void graph_draw_bars(GContext *ctx, GRect bounds, const float *vals, int n,
   }
   graphics_context_set_stroke_color(ctx, GColorBlack);
   graphics_draw_line(ctx, GPoint(plot.origin.x, base), GPoint(plot.origin.x + plot.size.w - 1, base));
+
+  graphics_context_set_stroke_color(ctx, GColorLightGray);
+  graphics_draw_line(ctx, GPoint(plot.origin.x, plot.origin.y), GPoint(plot.origin.x + plot.size.w - 1, plot.origin.y));
+
+  int hmax = (int)top;
+  char lab[6];
+  if (hmax >= 10) {
+    snprintf(lab, sizeof(lab), "%dh", hmax);
+  } else {
+    int t = (int)(top * 10.0f + 0.5f) % 10;
+    snprintf(lab, sizeof(lab), "%d.%dh", hmax, t);
+  }
+  graphics_context_set_text_color(ctx, GColorBlack);
+  GRect r = GRect(0, plot.origin.y - 6, plot.origin.x - 2, 12);
+  graphics_draw_text(ctx, lab, fonts_get_system_font(LABEL_FONT), r,
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
+  GRect r0 = GRect(0, base - 6, plot.origin.x - 2, 12);
+  graphics_draw_text(ctx, "0h", fonts_get_system_font(LABEL_FONT), r0,
+                     GTextOverflowModeTrailingEllipsis, GTextAlignmentRight, NULL);
 }
