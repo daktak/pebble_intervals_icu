@@ -96,6 +96,13 @@ static void graph_update(Layer *layer, GContext *ctx) {
   }
 }
 
+static void fmt_hrs(float v, char *out, int n) {
+  int h = (int)v;
+  int t = (int)(v * 10.0f + 0.5f) % 10;
+  if (h >= 10) snprintf(out, n, "%dh", h);
+  else snprintf(out, n, "%d.%dh", h, t);
+}
+
 static void update_info(void) {
   if (!s_info) return;
   static char buf[64];
@@ -104,10 +111,12 @@ static void update_info(void) {
   } else if (s_mode == MODE_FORM) {
     snprintf(buf, sizeof(buf), "Form %+d\n%s\nUP: fit  DOWN: var", s_tsb_now, form_zone(s_tsb_now));
   } else {
+    static char avg[8];
     if (strcmp(s_var_score, "-") == 0) {
-      snprintf(buf, sizeof(buf), "Train Var\n%s\nUP: form", s_var_word);
+      snprintf(buf, sizeof(buf), "Training Variability\n%s\nUP: form", s_var_word);
     } else {
-      snprintf(buf, sizeof(buf), "Train Var\n%s %s%%\nUP: form", s_var_word, s_var_score);
+      fmt_hrs(s_var_avg, avg, sizeof(avg));
+      snprintf(buf, sizeof(buf), "Training Variability\n%s %s%%  avg %s\nUP: form", s_var_word, s_var_score, avg);
     }
   }
   text_layer_set_text(s_info, buf);
