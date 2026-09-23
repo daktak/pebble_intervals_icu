@@ -6,9 +6,12 @@ your wrist.
 
 ## Features
 
-- **Today** (readiness): resting HR, HRV, sleep score + time, readiness,
-  stress, steps and VO2max for the latest day. Values show `-` when no
-  wearable data is available.
+- **Today** (readiness): a colored status banner (READY / NORMAL / FATIGUED /
+  OVERTRAINED / ILL RISK / INSF) derived from sleep duration, HRV–baseline,
+  Resting HR–baseline, stress and training load (TSB), plus resting HR, HRV,
+  sleep score + time with a duration rating (Good/Ok/Fair/Poor/Bad),
+  readiness, stress, steps and VO2max for the latest day. Values show `-`
+  when no wearable data is available.
 - **Weekly Stats** (last 7 days): total time, distance, training load,
   calories, elevation, plus Fitness (CTL), Fatigue (ATL), Form (TSB), ramp,
   estimated FTP (eFTP) and a consecutive activity-day streak. Units follow
@@ -20,7 +23,10 @@ your wrist.
 - **Training Load**: a 28-day Fitness (CTL, green) / Fatigue (ATL, orange)
   graph. Press **DOWN** for the **Form (TSB)** graph, which is colored by
   zone (High Risk, Transition, Optimal, Fresh, Grey Zone) with a current-zone
-  label. **UP** returns to the fitness graph; **BACK** returns to the menu.
+  label; press **DOWN** again for **Training Variability** — a 12-week
+  weekly-hours bar chart with a label (STEADY / MODERATE / UNEVEN / ERRATIC)
+  and a coefficient-of-variation score (recovery weeks < 50% of the median
+  are excluded). **UP** cycles back; **BACK** returns to the menu.
 - **Trends**: 28-day line charts of Sleep score, HRV and Resting HR.
   Press **UP**/**DOWN** to switch metric.
 - **Season Bests**: power-curve bests (5s / 1m / 5m / 20m / 60m), watts/kg,
@@ -52,8 +58,8 @@ Basic auth with `API_KEY` as the username.
 | Main menu            | Select    | Open Today / Stats / Activities / Load / Trends / Season Bests |
 | Main menu            | Configure | Open settings                         |
 | Activities           | Select    | Activity detail (scroll with up/down) |
-| Training Load        | Down      | Form graph                            |
-| Training Load / Form | Up        | Fitness graph (from Form)             |
+| Training Load        | Down      | Form graph → Variability (cycles)      |
+| Training Load        | Up        | Previous Training Load screen          |
 | Trends               | Up/Down   | Switch Sleep / HRV / Resting HR       |
 | Any page             | Back      | Main menu                             |
 
@@ -87,7 +93,7 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 
 `CMD`, `API_KEY`, `ATHLETE_ID`, `ACTIVITIES`, `TL_CTL`, `TL_ATL`, `TL_TSB`,
 `TL_SERIES`, `ERR`, `STATS`, `UNITS`, `ACTIVITY_DETAIL`, `ACT_IDX`,
-`TODAY`, `SEASON`, `TRENDS`, `AXIS`.
+`TODAY`, `SEASON`, `TRENDS`, `AXIS`, `VAR`.
 
 ## Notes
 

@@ -7,6 +7,9 @@
 #define MAX_PTS 64
 #define MODE_FITNESS 0
 #define MODE_FORM 1
+#define MODE_VARIABILITY 2
+#define MODE_COUNT 3
+#define VAR_WEEKS 12
 
 static int s_ctl[MAX_PTS];
 static int s_atl[MAX_PTS];
@@ -18,6 +21,13 @@ static int s_tsb_now = 0;
 static int s_mode = MODE_FITNESS;
 static char s_x0[8];
 static char s_x1[8];
+static char s_var_word[16];
+static char s_var_score[8];
+static float s_var_hours[VAR_WEEKS];
+static int s_var_n = 0;
+static float s_var_max = 0.0f;
+static float s_var_avg = 0.0f;
+static bool s_var_has = false;
 
 static Window *s_window = NULL;
 static TextLayer *s_info = NULL;
@@ -60,7 +70,7 @@ static void graph_update(Layer *layer, GContext *ctx) {
     graph_draw_series(ctx, b, s_ctl, s_n, minv, maxv, &st);
     st.line = GColorOrange;
     graph_draw_series(ctx, b, s_atl, s_n, minv, maxv, &st);
-  } else {
+  } else if (s_mode == MODE_FORM) {
     int maxv = -100000;
     int minv = 100000;
     for (int i = 0; i < s_n; i++) {
@@ -73,6 +83,16 @@ static void graph_update(Layer *layer, GContext *ctx) {
     st.fill = GColorFromRGBA(70, 70, 70, 80);
     st.zero_line = true;
     graph_draw_series(ctx, b, s_tsb_series, s_n, minv, maxv, &st);
+  } else {
+    if (!s_var_has || s_var_n < 1) {
+      graphics_context_set_text_color(ctx, GColorBlack);
+      graphics_draw_text(ctx, "No data", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
+        GRect(0, b.size.h / 2 - 20, b.size.w, 40),
+        GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+      return;
+    }
+    float maxv = s_var_max > 0.0f ? s_var_max : 1.0f;
+    graph_draw_bars(ctx, b, s_var_hours, s_var_n, maxv, GColorBlue, s_var_avg);
   }
 }
 
@@ -81,8 +101,14 @@ static void update_info(void) {
   static char buf[64];
   if (s_mode == MODE_FITNESS) {
     snprintf(buf, sizeof(buf), "Fit %d\nFatigue %d\nForm %+d\nDOWN: form", s_ctl_now, s_atl_now, s_tsb_now);
+  } else if (s_mode == MODE_FORM) {
+    snprintf(buf, sizeof(buf), "Form %+d\n%s\nUP: fit  DOWN: var", s_tsb_now, form_zone(s_tsb_now));
   } else {
-    snprintf(buf, sizeof(buf), "Form %+d\n%s\nUP: fitness", s_tsb_now, form_zone(s_tsb_now));
+    if (strcmp(s_var_score, "-") == 0) {
+      snprintf(buf, sizeof(buf), "Train Var\n%s\nUP: form", s_var_word);
+    } else {
+      snprintf(buf, sizeof(buf), "Train Var\n%s %s%%\nUP: form", s_var_word, s_var_score);
+    }
   }
   text_layer_set_text(s_info, buf);
 }
@@ -119,19 +145,15 @@ static void parse_series(char *series) {
 }
 
 static void down_click(ClickRecognizerRef rec, void *ctx) {
-  if (s_mode == MODE_FITNESS) {
-    s_mode = MODE_FORM;
-    update_info();
-    if (s_graph) layer_mark_dirty(s_graph);
-  }
+  s_mode = (s_mode + 1) % MODE_COUNT;
+  update_info();
+  if (s_graph) layer_mark_dirty(s_graph);
 }
 
 static void up_click(ClickRecognizerRef rec, void *ctx) {
-  if (s_mode == MODE_FORM) {
-    s_mode = MODE_FITNESS;
-    update_info();
-    if (s_graph) layer_mark_dirty(s_graph);
-  }
+  s_mode = (s_mode + MODE_COUNT - 1) % MODE_COUNT;
+  update_info();
+  if (s_graph) layer_mark_dirty(s_graph);
 }
 
 static void click_config(void *context) {
@@ -168,6 +190,8 @@ void load_show(int ctl, int atl, int tsb, char *series, const char *x0, const ch
   s_ctl_now = ctl;
   s_atl_now = atl;
   s_tsb_now = tsb;
+  s_var_has = false;
+  s_var_n = 0;
   snprintf(s_x0, sizeof(s_x0), "%s", x0 ? x0 : "");
   snprintf(s_x1, sizeof(s_x1), "%s", x1 ? x1 : "");
   s_mode = MODE_FITNESS;
@@ -180,4 +204,37 @@ void load_show(int ctl, int atl, int tsb, char *series, const char *x0, const ch
     .unload = window_unload,
   });
   window_stack_push(s_window, true);
+}
+
+void load_set_variability(const char *payload) {
+  s_var_has = false;
+  s_var_n = 0;
+  s_var_max = 0.0f;
+  s_var_avg = 0.0f;
+  if (!payload || !payload[0]) return;
+  static char buf[160];
+  snprintf(buf, sizeof(buf), "%s", payload);
+  char *save;
+  char *word = strtok_r(buf, ";", &save);
+  char *score = strtok_r(NULL, ";", &save);
+  char *hours = strtok_r(NULL, ";", &save);
+  if (!word || !score) return;
+  snprintf(s_var_word, sizeof(s_var_word), "%s", word);
+  snprintf(s_var_score, sizeof(s_var_score), "%s", score);
+  if (hours) {
+    char *save2;
+    char *v = strtok_r(hours, ",", &save2);
+    while (v && s_var_n < VAR_WEEKS) {
+      float f = (float)atoi(v) / 10.0f;
+      s_var_hours[s_var_n++] = f;
+      if (f > s_var_max) s_var_max = f;
+      v = strtok_r(NULL, ",", &save2);
+    }
+  }
+  if (s_var_n > 0) {
+    for (int i = 0; i < s_var_n; i++) s_var_avg += s_var_hours[i];
+    s_var_avg /= s_var_n;
+  }
+  s_var_has = true;
+  if (s_graph) layer_mark_dirty(s_graph);
 }

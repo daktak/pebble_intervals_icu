@@ -99,11 +99,94 @@ function fmtHours(sec) {
   return h + "h" + pad(m);
 }
 
+function sleepWord(sec) {
+  if (!isNum(sec)) return "-";
+  sec = Math.round(sec);
+  if (sec >= 25200) return "Good";
+  if (sec >= 21600) return "Ok";
+  if (sec >= 18000) return "Fair";
+  if (sec >= 14400) return "Poor";
+  return "Bad";
+}
+
+function sleepHrs(sec) {
+  if (!isNum(sec)) return "-";
+  return Math.round(sec / 3600) + "h";
+}
+
 function medianOf(arr) {
   var a = arr.slice().sort(function (x, y) { return x - y; });
   var n = a.length;
   if (n === 0) return null;
   return n % 2 === 1 ? a[(n - 1) / 2] : (a[n / 2 - 1] + a[n / 2]) / 2;
+}
+
+function stddev(arr) {
+  var n = arr.length;
+  if (n === 0) return 0;
+  var m = 0;
+  var i;
+  for (i = 0; i < n; i++) m += arr[i];
+  m /= n;
+  var v = 0;
+  for (i = 0; i < n; i++) v += (arr[i] - m) * (arr[i] - m);
+  return Math.sqrt(v / n);
+}
+
+function weekKey(dateStr) {
+  var parts = ("" + dateStr).split("-");
+  if (parts.length !== 3) return "";
+  var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  var off = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - off);
+  return fmt(d);
+}
+
+function varStatus(hours) {
+  var any = false;
+  var i;
+  for (i = 0; i < hours.length; i++) if (hours[i] > 0) any = true;
+  if (!any || hours.length < 4) return { word: "N/A", score: "-" };
+  var med = medianOf(hours);
+  var keep = [];
+  for (i = 0; i < hours.length; i++) {
+    if (med != null && hours[i] >= med * 0.5) keep.push(hours[i]);
+  }
+  if (keep.length < 4) return { word: "N/A", score: "-" };
+  var mean = 0;
+  for (i = 0; i < keep.length; i++) mean += keep[i];
+  mean /= keep.length;
+  var cv = mean > 0 ? Math.round((stddev(keep) / mean) * 100) : 0;
+  var word = cv < 30 ? "STEADY" : cv < 50 ? "MODERATE" : cv < 75 ? "UNEVEN" : "ERRATIC";
+  return { word: word, score: cv };
+}
+
+function buildVarPayload(acts) {
+  var weeks = {};
+  var i;
+  for (i = 0; i < (acts ? acts.length : 0); i++) {
+    var a = acts[i];
+    var k = weekKey(a.start_date_local || "");
+    if (!k) continue;
+    var t = isNum(a.moving_time) ? a.moving_time : (isNum(a.elapsed_time) ? a.elapsed_time : 0);
+    if (!weeks[k]) weeks[k] = 0;
+    weeks[k] += t / 3600;
+  }
+  var cur = new Date();
+  var curOff = (cur.getDay() + 6) % 7;
+  cur.setDate(cur.getDate() - curOff);
+  var hours = [];
+  var w;
+  for (w = 0; w < 12; w++) {
+    var d = new Date(cur);
+    d.setDate(d.getDate() - 7 * (12 - w));
+    var kk = fmt(d);
+    hours.push(weeks[kk] || 0);
+  }
+  var vs = varStatus(hours);
+  var out = [];
+  for (w = 0; w < 12; w++) out.push(String(Math.round(hours[w] * 10)));
+  return vs.word + ";" + vs.score + ";" + out.join(",");
 }
 
 function hrValue(w) {
@@ -323,8 +406,23 @@ function fetchLoad() {
     var t = last && typeof last.tsb === "number" ? Math.round(last.tsb) : c - a;
     var series = "ctl:" + ctl.join(",") + ";atl:" + atl.join(",") + ";tsb:" + tsb.join(",");
     console.log("LOAD ctl=" + c + " atl=" + a + " tsb=" + t + " seriesLen=" + series.length);
-    Pebble.sendAppMessage({ TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series, AXIS: axisOf(data) }, function (e) {
-      console.log("LOAD sendAppMessage result=" + (e && e.error ? "err:" + e.error : "ok"));
+    var varUrl =
+      "https://intervals.icu/api/v1/athlete/" +
+      (ATHLETE_ID || "0") +
+      "/activities?oldest=" +
+      daysAgo(83) +
+      "&newest=" +
+      daysAgo(0) +
+      "&limit=200&fields=start_date_local,moving_time,elapsed_time";
+    getJSON(varUrl, function (err2, acts) {
+      if (err2) console.log("LOAD VAR err=" + err2.message);
+      var varstr = buildVarPayload(err2 ? null : acts);
+      console.log("LOAD VAR=" + varstr);
+      Pebble.sendAppMessage({
+        TL_CTL: c, TL_ATL: a, TL_TSB: t, TL_SERIES: series, AXIS: axisOf(data), VAR: varstr
+      }, function (e) {
+        console.log("LOAD sendAppMessage result=" + (e && e.error ? "err:" + e.error : "ok"));
+      });
     });
   });
 }
@@ -456,7 +554,10 @@ function readinessStatus(data) {
 
   var subs = [];
   function add(s) { subs.push(s); }
-  if (isNum(today.sleepScore)) {
+  if (isNum(today.sleepSecs)) {
+    var sec = today.sleepSecs;
+    add(sec >= 21600 ? 1 : sec >= 18000 ? 0 : sec >= 14400 ? -1 : -2);
+  } else if (isNum(today.sleepScore)) {
     add(today.sleepScore >= 85 ? 1 : today.sleepScore >= 70 ? 0 : today.sleepScore >= 55 ? -1 : -2);
   }
   var hrv = hrValue(today);
@@ -520,7 +621,7 @@ function fetchToday() {
     var lines = [];
     lines.push(header);
     lines.push("RHR " + roundVal(w ? w.restingHR : null) + "  HRV " + (hrv == null ? "-" : Math.round(hrv)));
-    lines.push("Sleep " + roundVal(w ? w.sleepScore : null) + "  Time " + fmtHours(w ? w.sleepSecs : null));
+    lines.push("Sleep " + roundVal(w ? w.sleepScore : null) + "  " + sleepHrs(w ? w.sleepSecs : null) + " " + sleepWord(w ? w.sleepSecs : null));
     lines.push("Read " + roundVal(w ? w.readiness : null) + "  Stress " + roundVal(w ? w.stress : null));
     lines.push("Steps " + roundVal(w ? w.steps : null) + "  VO2 " + roundVal(w ? w.vo2max : null));
     var payload = lines.join("\n");

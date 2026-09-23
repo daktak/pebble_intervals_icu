@@ -134,3 +134,43 @@ void graph_draw_series(GContext *ctx, GRect bounds, const int *series, int n,
   draw_thick_line(ctx, plot, series, n, minv, maxv, style ? style->line : GColorBlack);
   draw_xaxis(ctx, plot, style ? style->x0 : NULL, style ? style->x1 : NULL);
 }
+
+void graph_draw_bars(GContext *ctx, GRect bounds, const float *vals, int n,
+                     float maxv, GColor color, float avg) {
+  if (n < 1) return;
+  GRect plot = GRect(bounds.origin.x + LEFT_MARGIN,
+                     bounds.origin.y + 8,
+                     bounds.size.w - LEFT_MARGIN - RIGHT_MARGIN,
+                     bounds.size.h - 8 - 4);
+  if (plot.size.w < 4 || plot.size.h < 4) return;
+  int base = plot.origin.y + plot.size.h;
+  float top = maxv > 0 ? maxv : 1.0f;
+  int bw = plot.size.w / n;
+  if (bw < 2) bw = 2;
+  int gap = bw > 4 ? 2 : 1;
+  graphics_context_set_fill_color(ctx, line_color_of(color));
+  for (int i = 0; i < n; i++) {
+    int h = (int)((vals[i] > 0 ? vals[i] : 0.0f) / top * plot.size.h);
+    if (h < 1) h = 1;
+    GRect bar = GRect(plot.origin.x + i * bw + gap / 2,
+                      base - h,
+                      bw - gap,
+                      h);
+    graphics_fill_rect(ctx, bar, 0, GCornerNone);
+  }
+  if (avg > 0) {
+    int ay = base - (int)((avg / top) * plot.size.h);
+    if (ay < plot.origin.y) ay = plot.origin.y;
+    if (ay > base) ay = base;
+    graphics_context_set_stroke_color(ctx, GColorDarkGray);
+    int x = plot.origin.x;
+    while (x < plot.origin.x + plot.size.w) {
+      int len = 3;
+      if (x + len > plot.origin.x + plot.size.w) len = plot.origin.x + plot.size.w - x;
+      graphics_draw_line(ctx, GPoint(x, ay), GPoint(x + len - 1, ay));
+      x += 6;
+    }
+  }
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_line(ctx, GPoint(plot.origin.x, base), GPoint(plot.origin.x + plot.size.w - 1, base));
+}

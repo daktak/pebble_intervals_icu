@@ -15,4 +15,7 @@ typedef struct {
 void graph_draw_series(GContext *ctx, GRect bounds, const int *series, int n,
                        int minv, int maxv, const GraphStyle *style);
 
+void graph_draw_bars(GContext *ctx, GRect bounds, const float *vals, int n,
+                     float maxv, GColor color, float avg);
+
 #endif

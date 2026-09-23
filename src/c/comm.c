@@ -81,8 +81,10 @@ static void inbox_received(DictionaryIterator *iter, void *context) {
     if (tt) tsb = tt->value->int32;
     char ax0[8], ax1[8];
     parse_axis(iter, ax0, sizeof(ax0), ax1, sizeof(ax1));
+    Tuple *tv = dict_find(iter, MESSAGE_KEY_VAR);
     ui_dismiss_overlay();
     load_show(ctl, atl, tsb, ts ? ts->value->cstring : "", ax0, ax1);
+    if (tv) load_set_variability(tv->value->cstring);
     return;
   }
 

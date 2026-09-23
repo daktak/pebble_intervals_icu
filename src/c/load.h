@@ -4,5 +4,6 @@
 #include <pebble.h>
 
 void load_show(int ctl, int atl, int tsb, char *series, const char *x0, const char *x1);
+void load_set_variability(const char *payload);
 
 #endif

@@ -46,7 +46,8 @@
       "TODAY",
       "SEASON",
       "TRENDS",
-      "AXIS"
+      "AXIS",
+      "VAR"
     ],
     "resources": {
       "media": []
