@@ -759,10 +759,22 @@ function fetchTrends() {
     var i;
     for (i = 0; i < (data ? data.length : 0); i++) {
       var w = data[i];
-      if (isNum(w.restingHR)) rhr.push(Math.round(w.restingHR));
+      if (isNum(w.restingHR)) {
+        rhr.push(Math.round(w.restingHR));
+      } else {
+        rhr.push(0);
+      }
       var hv = hrValue(w);
-      if (hv != null) hrv.push(Math.round(hv));
-      if (isNum(w.sleepScore)) slp.push(Math.round(w.sleepScore));
+      if (hv != null) {
+        hrv.push(Math.round(hv));
+      } else {
+        hrv.push(0);
+      }
+      if (isNum(w.sleepScore)) {
+        slp.push(Math.round(w.sleepScore));
+      } else {
+        slp.push(0);
+      }
     }
     var series =
       "rhr:" + rhr.join(",") +
