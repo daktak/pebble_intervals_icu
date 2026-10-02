@@ -34,19 +34,21 @@ static TextLayer *s_info = NULL;
 static Layer *s_graph = NULL;
 
 static const char *form_zone(int tsb) {
-  if (tsb <= -30) return "High Risk";
-  if (tsb <= -15) return "Transition";
-  if (tsb <= 0) return "Optimal";
-  if (tsb <= 15) return "Fresh";
-  return "Grey Zone";
+  if (tsb < -30) return "High Risk";
+  if (tsb >= -30 && tsb <= -10) return "Optimal";
+  if (tsb > -10 && tsb < 5) return "Grey Zone";
+  if (tsb >= 5 && tsb <= 20) return "Fresh";
+  if (tsb > 20) return "Transition";
+  return "Optimal";
 }
 
 static GColor form_color(int tsb) {
-  if (tsb <= -30) return GColorRed;
-  if (tsb <= -15) return GColorOrange;
-  if (tsb <= 0) return GColorGreen;
-  if (tsb <= 15) return GColorCyan;
-  return GColorLightGray;
+  if (tsb < -30) return GColorRed;
+  if (tsb >= -30 && tsb <= -10) return GColorGreen;
+  if (tsb > -10 && tsb < 5) return GColorLightGray;
+  if (tsb >= 5 && tsb <= 20) return GColorCyan;
+  if (tsb > 20) return GColorOrange;
+  return GColorGreen;
 }
 
 static void graph_update(Layer *layer, GContext *ctx) {

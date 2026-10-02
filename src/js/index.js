@@ -575,7 +575,7 @@ function readinessStatus(data) {
   var tsb = isNum(today.tsb) ? today.tsb :
     (isNum(today.ctl) && isNum(today.atl) ? today.ctl - today.atl : null);
   if (tsb != null) {
-    add(tsb >= 5 ? 1 : tsb >= -10 ? 0 : tsb >= -20 ? -1 : -2);
+    add(tsb >= 5 ? 1 : tsb >= -10 ? 0 : tsb >= -30 ? -1 : -2);
   }
   if (subs.length < 2) return { label: "INSF", score: "-" };
   var total = 0;
@@ -585,7 +585,7 @@ function readinessStatus(data) {
       today.restingHR - rmed >= 5 && hrv / hmed <= 0.90) {
     return { label: "ILL RISK", score: total };
   }
-  if (tsb != null && tsb < -20) return { label: "OVERTRAINED", score: total };
+  if (tsb != null && tsb < -30) return { label: "OVERTRAINED", score: total };
   if (total >= 2) return { label: "READY", score: total };
   if (total <= -2) return { label: "FATIGUED", score: total };
   return { label: "NORMAL", score: total };

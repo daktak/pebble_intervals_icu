@@ -100,5 +100,5 @@ it with `pebble install` (connected watch) or sideload the `.pbw`.
 - The watch inbox is limited to 1024 bytes, so activity detail is fetched
   on demand (one small message per tapped activity) rather than bundled into
   the weekly list.
-- The Form-zone thresholds (TSB) are: `≤ -30` High Risk, `-30…-15`
-  Transition, `-15…0` Optimal, `0…+15` Fresh, `> +15` Grey Zone.
+- The Form-zone thresholds (TSB) are: `< -30` High Risk, `-30…-10`
+  Optimal, `-10…5` Grey Zone, `5…+20` Fresh, `> +20` Transition.
