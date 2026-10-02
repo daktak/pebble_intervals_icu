@@ -212,10 +212,46 @@ function eftpOf(w) {
   return null;
 }
 
-function curveAt(vals, sec) {
+function curveAt(pc, sec) {
+  if (!pc) return null;
+  var vals = pc.values;
   if (!vals || !vals.length) return null;
+  var secs = pc.secs;
+  if (secs && secs.length && secs.length === vals.length) {
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i] === sec) {
+        return vals[i];
+      }
+    }
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i] > sec && i > 0) {
+        return vals[i - 1];
+      }
+    }
+    return vals[vals.length - 1];
+  }
   var idx = sec - 1;
   return vals.length > idx ? vals[idx] : vals[vals.length - 1];
+}
+
+function wkgAt(pc, sec) {
+  if (!pc || !pc.watts_per_kg || !Array.isArray(pc.watts_per_kg)) return null;
+  var secs = pc.secs;
+  var wkg = pc.watts_per_kg;
+  if (secs && secs.length && secs.length === wkg.length) {
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i] === sec) {
+        return wkg[i];
+      }
+    }
+    for (var i = 0; i < secs.length; i++) {
+      if (secs[i] > sec && i > 0) {
+        return wkg[i - 1];
+      }
+    }
+    return wkg[wkg.length - 1];
+  }
+  return null;
 }
 
 function computeStreak(dates) {
@@ -648,10 +684,18 @@ function fetchSeason() {
       return;
     }
     var pc = null;
-    if (data && data.length) {
-      for (var i = 0; i < data.length; i++) {
-        if (data[i] && data[i].values) {
-          pc = data[i];
+    var curves = null;
+    if (data && Array.isArray(data)) {
+      curves = data;
+    } else if (data && data.list && Array.isArray(data.list)) {
+      curves = data.list;
+    } else if (data && data.list && data.list.list && Array.isArray(data.list.list)) {
+      curves = data.list.list;
+    }
+    if (curves && curves.length) {
+      for (var i = 0; i < curves.length; i++) {
+        if (curves[i] && curves[i].values) {
+          pc = curves[i];
           break;
         }
       }
@@ -673,9 +717,12 @@ function fetchSeason() {
       " wkg=" + pc.watts_per_kg + " vo2=" + pc.vo2max_5m);
     var wkg = isNum(pc.watts_per_kg) ? pc.watts_per_kg.toFixed(1) : "-";
     var lines = [];
-    lines.push("5s " + roundVal(curveAt(pc.values, 5)) + "  1m " + roundVal(curveAt(pc.values, 60)));
-    lines.push("5m " + roundVal(curveAt(pc.values, 300)) + "  20m " + roundVal(curveAt(pc.values, 1200)));
-    lines.push("60m " + roundVal(curveAt(pc.values, 3600)) + "  Wkg " + wkg);
+    lines.push("5s " + roundVal(curveAt(pc, 5)) + "  1m " + roundVal(curveAt(pc, 60)));
+    lines.push("5m " + roundVal(curveAt(pc, 300)) + "  20m " + roundVal(curveAt(pc, 1200)));
+    var wkgv = wkgAt(pc, 300);
+    if (wkgv == null && isNum(pc.watts_per_kg)) wkgv = pc.watts_per_kg;
+    wkg = isNum(wkgv) ? wkgv.toFixed(1) : "-";
+    lines.push("60m " + roundVal(curveAt(pc, 3600)) + "  Wkg " + wkg);
     lines.push("VO2 " + roundVal(pc.vo2max_5m) + "  Days " + roundVal(pc.days));
     var payload = lines.join("\n");
     console.log("SEASON sending=" + payload);
