@@ -36,7 +36,8 @@ your wrist.
 - **Settings**: set your Intervals.icu API key, Athlete ID, and Units from the
   Pebble app's configuration page (Clay).
 
-![](screenshots/animate.gif?raw=true)
+![](screenshots/emery1.gif?raw=true)
+![](screenshots/emery2.gif?raw=true)
 
 ## Setup
 
