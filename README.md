@@ -4,6 +4,8 @@ A Pebble watch app for [Intervals.icu](https://intervals.icu) that shows your
 recent training summary, weekly activities, and fitness/form graphs right on
 your wrist.
 
+[Rebble App Store](https://apps.rebble.io/en_US/application/6a813cce06c3a00009b85c96)
+
 ## Features
 
 - **Today** (readiness): a colored status banner (READY / NORMAL / FATIGUED /

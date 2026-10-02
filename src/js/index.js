@@ -203,6 +203,9 @@ function hrValue(w) {
 function eftpOf(w) {
   if (!w) return null;
   var si = w.sportInfo;
+  if (si && Array.isArray(si) && si.length > 0) {
+    si = si[0];
+  }
   if (si && typeof si === "object") {
     if (isNum(si.eftp)) return Math.round(si.eftp);
     if (si.cycling && isNum(si.cycling.eftp)) return Math.round(si.cycling.eftp);
