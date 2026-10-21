@@ -30,7 +30,9 @@ your wrist.
   and a coefficient-of-variation score (recovery weeks < 50% of the median
   are excluded). **UP** cycles back; **BACK** returns to the menu.
 - **Trends**: 28-day line charts of Sleep score, HRV and Resting HR.
-  Press **UP**/**DOWN** to switch metric.
+  Press **UP**/**DOWN** to switch metric. Days with no data are skipped: the
+  line breaks there, the y-axis scales to the values you do have, and a lone
+  reading is drawn as a dot.
 - **Season Bests**: power-curve bests (5s / 1m / 5m / 20m / 60m), watts/kg,
   VO2max estimate and curve coverage days.
 - **Settings**: set your Intervals.icu API key, Athlete ID, and Units from the

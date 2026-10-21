@@ -24,23 +24,40 @@ static int pixel_y(GRect plot, int v, int minv, int maxv) {
 }
 
 static void draw_thick_line(GContext *ctx, GRect plot, const int *series, int n,
-                            int minv, int maxv, GColor color) {
+                            int minv, int maxv, GColor color, bool skip_zero) {
   if (n < 2) return;
   static const GPoint offs[3] = { {0, 0}, {1, 0}, {0, 1} };
   graphics_context_set_stroke_color(ctx, line_color_of(color));
   for (int o = 0; o < 3; o++) {
     GPoint prev = GPointZero;
+    bool have_prev = false;
     for (int i = 0; i < n; i++) {
+      if (skip_zero && series[i] == 0) {
+        have_prev = false;
+        continue;
+      }
       GPoint p = GPoint(pixel_x(plot, n, i) + offs[o].x,
                         pixel_y(plot, series[i], minv, maxv) + offs[o].y);
-      if (i > 0) graphics_draw_line(ctx, prev, p);
+      if (have_prev) graphics_draw_line(ctx, prev, p);
       prev = p;
+      have_prev = true;
     }
+  }
+  if (!skip_zero) return;
+  graphics_context_set_fill_color(ctx, line_color_of(color));
+  for (int i = 0; i < n; i++) {
+    if (series[i] == 0) continue;
+    bool has_left = (i > 0) && series[i - 1] != 0;
+    bool has_right = (i < n - 1) && series[i + 1] != 0;
+    if (has_left || has_right) continue;
+    int x = pixel_x(plot, n, i);
+    int y = pixel_y(plot, series[i], minv, maxv);
+    graphics_fill_rect(ctx, GRect(x - 1, y - 1, 3, 3), 0, GCornerNone);
   }
 }
 
 static void fill_area(GContext *ctx, GRect plot, const int *series, int n,
-                      int minv, int maxv, GColor fill, bool to_zero) {
+                      int minv, int maxv, GColor fill, bool to_zero, bool skip_zero) {
   if (n < 2) return;
   GColor fc = PBL_IF_COLOR_ELSE(fill, GColorLightGray);
   graphics_context_set_fill_color(ctx, fc);
@@ -57,6 +74,7 @@ static void fill_area(GContext *ctx, GRect plot, const int *series, int n,
     int i1 = i0 + 1;
     if (i0 >= n - 1) i0 = n - 1;
     if (i1 > n - 1) i1 = n - 1;
+    if (skip_zero && (series[i0] == 0 || series[i1] == 0)) continue;
     double frac = fpos - i0;
     int v = (int)(series[i0] + (series[i1] - series[i0]) * frac);
     int yv = pixel_y(plot, v, minv, maxv);
@@ -125,14 +143,16 @@ void graph_draw_series(GContext *ctx, GRect bounds, const int *series, int n,
                      bounds.size.h - TOP_MARGIN - BOTTOM_MARGIN);
   if (plot.size.w < 4 || plot.size.h < 4) return;
 
+  bool skip_zero = style && style->skip_zero;
   if (style && style->has_fill) {
-    fill_area(ctx, plot, series, n, minv, maxv, style->fill, style->zero_line);
+    fill_area(ctx, plot, series, n, minv, maxv, style->fill, style->zero_line, skip_zero);
   }
   draw_grid(ctx, plot, minv, maxv);
   if (style && style->zero_line) {
     draw_zero_line(ctx, plot, minv, maxv);
   }
-  draw_thick_line(ctx, plot, series, n, minv, maxv, style ? style->line : GColorBlack);
+  draw_thick_line(ctx, plot, series, n, minv, maxv, style ? style->line : GColorBlack,
+                  skip_zero);
   draw_xaxis(ctx, plot, style ? style->x0 : NULL, style ? style->x1 : NULL);
 }
 

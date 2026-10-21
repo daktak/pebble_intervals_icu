@@ -61,37 +61,48 @@ static GColor mode_fill(int mode) {
 
 static int mode_last(void) {
   int *s = series_for(s_mode);
-  return s_n > 0 ? s[s_n - 1] : 0;
+  for (int i = s_n - 1; i >= 0; i--) {
+    if (s[i] != 0) return s[i];
+  }
+  return -1;
 }
 
 static void update_info(void) {
   if (!s_info) return;
   static char buf[64];
-  snprintf(buf, sizeof(buf), "%s\nlast %d\nUP/DOWN: switch", mode_name(s_mode), mode_last());
+  char last[8];
+  int v = mode_last();
+  if (v < 0) {
+    snprintf(last, sizeof(last), "-");
+  } else {
+    snprintf(last, sizeof(last), "%d", v);
+  }
+  snprintf(buf, sizeof(buf), "%s\nlast %s\nUP/DOWN: switch", mode_name(s_mode), last);
   text_layer_set_text(s_info, buf);
 }
 
 static void graph_update(Layer *layer, GContext *ctx) {
   GRect b = layer_get_bounds(layer);
   int *s = series_for(s_mode);
-  if (s_n < 2) {
+  int valid = 0;
+  int minv = 100000;
+  int maxv = -100000;
+  for (int i = 0; i < s_n; i++) {
+    if (s[i] == 0) continue;
+    valid++;
+    if (s[i] > maxv) maxv = s[i];
+    if (s[i] < minv) minv = s[i];
+  }
+  if (valid == 0) {
     graphics_context_set_text_color(ctx, GColorBlack);
     graphics_draw_text(ctx, "No data", fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD),
       GRect(0, b.size.h / 2 - 20, b.size.w, 40),
       GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
     return;
   }
-  int minv, maxv;
   if (s_mode == MODE_SLEEP) {
     minv = 0;
     maxv = 100;
-  } else {
-    minv = 100000;
-    maxv = -100000;
-    for (int i = 0; i < s_n; i++) {
-      if (s[i] > maxv) maxv = s[i];
-      if (s[i] < minv) minv = s[i];
-    }
   }
   if (maxv <= minv) maxv = minv + 1;
   GraphStyle st;
@@ -99,6 +110,7 @@ static void graph_update(Layer *layer, GContext *ctx) {
   st.line = mode_color(s_mode);
   st.has_fill = true;
   st.fill = mode_fill(s_mode);
+  st.skip_zero = true;
   st.x0 = s_x0;
   st.x1 = s_x1;
   graph_draw_series(ctx, b, s, s_n, minv, maxv, &st);

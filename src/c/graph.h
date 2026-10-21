@@ -10,6 +10,7 @@ typedef struct {
   const char *x0;
   const char *x1;
   bool zero_line;
+  bool skip_zero;
 } GraphStyle;
 
 void graph_draw_series(GContext *ctx, GRect bounds, const int *series, int n,
