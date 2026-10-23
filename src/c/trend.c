@@ -6,8 +6,8 @@
 
 #define MAX_PTS 64
 #define MODE_SLEEP 0
-#define MODE_HRV 1
-#define MODE_RHR 2
+#define MODE_RHR 1
+#define MODE_HRV 2
 #define MODE_COUNT 3
 
 static int s_series[MODE_COUNT][MAX_PTS];
@@ -77,7 +77,14 @@ static void update_info(void) {
   } else {
     snprintf(last, sizeof(last), "%d", v);
   }
-  snprintf(buf, sizeof(buf), "%s\nlast %s\nUP/DOWN: switch", mode_name(s_mode), last);
+  const char *hint;
+  switch (s_mode) {
+    case MODE_RHR: hint = "UP: sleep  DOWN: hrv"; break;
+    case MODE_HRV: hint = "UP: rhr"; break;
+    case MODE_SLEEP:
+    default: hint = "DOWN: rhr"; break;
+  }
+  snprintf(buf, sizeof(buf), "%s\nlast %s\n%s", mode_name(s_mode), last, hint);
   text_layer_set_text(s_info, buf);
 }
 
@@ -116,18 +123,16 @@ static void graph_update(Layer *layer, GContext *ctx) {
   graph_draw_series(ctx, b, s, s_n, minv, maxv, &st);
 }
 
-static void next_mode(void) {
-  s_mode = (s_mode + 1) % MODE_COUNT;
+static void up_click(ClickRecognizerRef rec, void *ctx) {
+  s_mode = (s_mode + MODE_COUNT - 1) % MODE_COUNT;
   update_info();
   if (s_graph) layer_mark_dirty(s_graph);
 }
 
-static void up_click(ClickRecognizerRef rec, void *ctx) {
-  next_mode();
-}
-
 static void down_click(ClickRecognizerRef rec, void *ctx) {
-  next_mode();
+  s_mode = (s_mode + 1) % MODE_COUNT;
+  update_info();
+  if (s_graph) layer_mark_dirty(s_graph);
 }
 
 static void click_config(void *context) {
